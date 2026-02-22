@@ -1,54 +1,98 @@
-# web-ta-liso-app
+# Tá Liso — Web App
 
-This template should help get you started developing with Vue 3 in Vite.
+Aplicação web de controle financeiro pessoal. Permite organizar gastos por categorias, registrar lançamentos em linguagem natural via chat e acompanhar resumo e orçamento do mês.
 
-## Recommended IDE Setup
+## Sobre o projeto
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- **Stack:** Vue 3, Vite, TypeScript, Tailwind CSS v4, Vue Router, Pinia
+- **Layout:** Responsivo — mobile (barra inferior de navegação) e desktop (sidebar + topbar). Telas de login e token também se adaptam ao tamanho da tela.
+- **Rotas:** Login, Token (código por e-mail), Início, Categorias, Chat, Resumo, Configurações. O scroll da área de conteúdo é resetado ao trocar de página.
 
-## Recommended Browser Setup
+### Principais telas
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+| Rota | Descrição |
+|------|-----------|
+| `/login` | Entrada por e-mail (envio de código) |
+| `/token` | Inserção do código de 6 caracteres |
+| `/` | Início: saldo do mês, alertas e categorias |
+| `/categorias` | Nova categoria e lista de categorias com orçamento |
+| `/chat` | Assistente para registrar gastos em linguagem natural; no desktop, sidebar com saldos por categoria |
+| `/resumo` | Seletor de mês, saldo, gasto por categoria e lançamentos |
+| `/configuracoes` | Perfil, notificações, orçamento, dados e sair da conta |
 
-## Type Support for `.vue` Imports in TS
+O avatar com iniciais no header da Home redireciona para Configurações.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+### Estrutura do código
 
-## Customize configuration
+```
+src/
+├── assets/          # CSS global (Tailwind)
+├── components/      # AppShell, BottomNav, DesktopSidebar, DesktopTopbar, TokenCodeInput
+├── router/          # Rotas e reset de scroll
+├── stores/          # Pinia (ex.: counter)
+├── views/           # Uma view por rota principal
+└── main.ts
+```
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Pré-requisitos
 
-## Project Setup
+- **Node.js** `^20.19.0` ou `>=22.12.0` (ver `engines` em `package.json`)
+
+## Como executar
+
+### Instalar dependências
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### Desenvolvimento (hot-reload)
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+O app abre em `http://localhost:5173` (ou a URL exibida no terminal).
+
+### Build para produção
 
 ```sh
 npm run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+Saída em `dist/`. Para preview local:
+
+```sh
+npm run preview
+```
+
+### Testes
 
 ```sh
 npm run test:unit
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### Lint e formatação
 
 ```sh
 npm run lint
+npm run format
 ```
+
+### Verificação de tipos
+
+```sh
+npm run type-check
+```
+
+## IDE e ferramentas
+
+- **VS Code:** use a extensão [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (e desative o Vetur).
+- **Navegador:** [Vue DevTools](https://devtools.vuejs.org/) para inspecionar componentes e roteamento.
+
+## Configuração
+
+- **Vite:** `vite.config.ts`
+- **TypeScript:** `tsconfig.json` / `tsconfig.app.json`
+- **Tailwind:** `src/assets/main.css` (directives `@import 'tailwindcss'` e `@source` para escanear arquivos)
+- **ESLint / Prettier:** configurados no projeto
