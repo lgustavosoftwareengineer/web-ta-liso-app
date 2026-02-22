@@ -9,8 +9,11 @@ function isActive(name: string) {
 </script>
 
 <template>
-  <nav
-    class="flex items-end shrink-0 pt-2 pb-5 border-t-2 border-[#E5D9C3]"
+  <div class="app-bottom-nav">
+    <!-- Spacer so main content has room above the fixed nav -->
+    <div class="shrink-0 w-full" style="height: 86px" aria-hidden="true" />
+    <nav
+    class="fixed left-0 right-0 bottom-0 flex items-end w-full pt-2 pb-5 border-t-2 border-[#E5D9C3] z-100"
     style="background: #fff"
   >
     <RouterLink
@@ -59,4 +62,5 @@ function isActive(name: string) {
       Config.
     </RouterLink>
   </nav>
+  </div>
 </template>

@@ -20,12 +20,13 @@ const categories = [
       <div class="font-bold text-[#1A1008] text-xl leading-none" style="font-family: 'Baloo 2', cursive">
         Tá <span style="color: #E8500A">Liso</span> 💸
       </div>
-      <div
-        class="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+      <RouterLink
+        to="/configuracoes"
+        class="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0 cursor-pointer no-underline"
         style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A 0%, #F5C518 100%)"
       >
         JA
-      </div>
+      </RouterLink>
     </header>
 
     <!-- Scrollable content -->

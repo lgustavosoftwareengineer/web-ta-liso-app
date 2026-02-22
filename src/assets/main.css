@@ -3,3 +3,13 @@
 #app {
   min-height: 100vh;
 }
+
+/* Desktop: hide view header and bottom nav when inside app shell */
+@media (min-width: 1024px) {
+  .app-shell-desktop .page-body-desktop header {
+    display: none;
+  }
+  .app-shell-desktop .page-body-desktop .app-bottom-nav {
+    display: none;
+  }
+}
