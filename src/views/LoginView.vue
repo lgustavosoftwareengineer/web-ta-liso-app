@@ -55,7 +55,7 @@ function sendCode() {
       </div>
 
       <!-- Spacer -->
-      <div class="flex-1 min-h-[4rem]" />
+      <div class="flex-1 min-h-16" />
 
       <!-- Login form -->
       <div class="space-y-4">
@@ -74,7 +74,7 @@ function sendCode() {
             v-model="email"
             type="email"
             placeholder="joao@email.com"
-            class="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/40 bg-white/[0.08] border border-white/20 outline-none transition-colors focus:border-[#F5C518]"
+            class="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/40 bg-white/8 border border-white/20 outline-none transition-colors focus:border-[#F5C518]"
           >
         </div>
 
