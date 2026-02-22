@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tá Liso App — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Paleta Nordestina — inspirada em bandeiras de São João, azulejo, xilogravura */
+    --laranja:    #E8500A;   /* laranja forró */
+    --laranja-lt: #FF7A3D;
+    --laranja-pale: #FEF0E8;
+    --amarelo:    #F5C518;   /* amarelo festa */
+    --amarelo-pale: #FEFAE8;
+    --azul:       #1A5C9E;   /* azul de azulejo pernambucano */
+    --azul-lt:    #2E7FD8;
+    --azul-pale:  #E8F1FB;
+    --verde:      #1E8C45;   /* verde canavial */
+    --verde-lt:   #28B85C;
+    --verde-pale: #E8F7EE;
+    --vermelho:   #C0252A;   /* vermelho bandeirola */
+    --vermelho-pale: #FAEAEA;
+    --roxo:       #6B2D8B;   /* roxo forró */
+
+    --ink:    #1A1008;
+    --paper:  #FDFAF4;
+    --areia:  #F5EDD8;   /* areia do agreste */
+    --muted:  #7A6E5F;
+    --border: #E5D9C3;
+    --white:  #FFFFFF;
+
+    --shadow: 0 4px 24px rgba(26,16,8,0.10);
+    --shadow-lg: 0 12px 48px rgba(26,16,8,0.16);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #1A1008 0%, #2C1A08 40%, #1A2C08 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+
+  h1, h2, h3, .logo { font-family: 'Baloo 2', cursive; }
+
+  /* ======== HEADER ======== */
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .page-header-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--amarelo);
+    text-shadow: 3px 3px 0 var(--laranja), 6px 6px 0 rgba(0,0,0,0.3);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .page-header-logo span { color: var(--laranja-lt); }
+  .page-header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .bandeirola-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 16px 0 0;
+  }
+  .bandeirola {
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 18px solid;
+    margin: 0 1px;
+  }
+
+  /* ======== DEVICE FRAME ======== */
+  .device-grid {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1240px;
+  }
+
+  .device-label {
+    font-family: 'Baloo 2', cursive;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* Mobile frame */
+  .mobile-wrap { flex: 0 0 auto; }
+  .mobile-frame {
+    width: 375px;
+    height: 780px;
+    background: #0e0a04;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow:
+      0 32px 80px rgba(0,0,0,0.6),
+      inset 0 0 0 1px rgba(255,255,255,0.08),
+      0 0 0 6px #1a1008;
+    position: relative;
+  }
+  .mobile-notch {
+    width: 120px; height: 30px;
+    background: #0e0a04;
+    border-radius: 0 0 18px 18px;
+    position: absolute;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+  }
+  .notch-cam { width: 10px; height: 10px; background: #111; border-radius: 50%; border: 1.5px solid #222; }
+  .mobile-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--paper);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Desktop frame */
+  .desktop-wrap { flex: 0 0 auto; }
+  .desktop-frame {
+    width: 760px;
+    background: #1a1008;
+    border-radius: 16px;
+    padding: 8px 8px 0;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .desktop-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+  .desktop-url {
+    flex: 1;
+    height: 18px;
+    background: #2a1e0c;
+    border-radius: 4px;
+    margin: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-family: 'Nunito', sans-serif;
+  }
+  .desktop-screen {
+    background: var(--paper);
+    border-radius: 8px 8px 0 0;
+    height: 540px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* ======== STATUS BAR ======== */
+  .status-bar {
+    height: 44px;
+    padding: 14px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .status-time { font-family: 'Baloo 2', cursive; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .status-icons { display: flex; gap: 5px; align-items: center; font-size: 10px; color: var(--ink); }
+
+  /* ---- SCREEN VIEWS ---- */
+  .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* ======== TAB BAR ======== */
+  .tab-bar {
+    display: flex;
+    background: var(--white);
+    padding: 6px 10px;
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+    gap: 2px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 6px 2px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    font-family: 'Baloo 2', cursive;
+  }
+  .tab.active { background: var(--laranja-pale); color: var(--laranja); }
+
+  /* ======== LOGIN SCREEN ======== */
+  .login-screen {
+    background: var(--ink);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 28px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Bandeirolas decorativas no login */
+  .login-bandeirolas {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    height: 18px;
+    overflow: hidden;
+  }
+  .login-bandeirola {
+    flex: 1;
+    height: 100%;
+  }
+  .login-screen::before {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(232,80,10,0.35) 0%, transparent 70%);
+    top: -80px; right: -80px;
+    border-radius: 50%;
+  }
+  .login-screen::after {
+    content: '';
+    position: absolute;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(245,197,24,0.2) 0%, transparent 70%);
+    bottom: 100px; left: -60px;
+    border-radius: 50%;
+  }
+  /* Estrela de 5 pontas Pernambuco no fundo */
+  .star-bg {
+    position: absolute;
+    bottom: 120px;
+    right: -20px;
+    font-size: 120px;
+    opacity: 0.04;
+    z-index: 0;
+  }
+
+  .login-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.01em;
+    margin-top: 32px;
+    position: relative;
+    z-index: 1;
+    line-height: 1;
+  }
+  .login-logo .liso { color: var(--amarelo); }
+  .login-logo .emoji { font-size: 22px; }
+  .login-tagline {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 5px;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+    font-style: italic;
+  }
+
+  .login-form-area {
+    margin-top: auto;
+    position: relative;
+    z-index: 1;
+  }
+  .login-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .login-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .input-group { margin-bottom: 14px; }
+  .input-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .input-field {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    color: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--amarelo); }
+  .input-field::placeholder { color: rgba(255,255,255,0.2); }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--laranja) 0%, var(--amarelo) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Baloo 2', cursive;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(232,80,10,0.4);
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* Token */
+  .token-hint {
+    background: rgba(245,197,24,0.12);
+    border: 1px solid rgba(245,197,24,0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .token-hint-text { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.4; }
+  .token-input { display: flex; gap: 8px; margin-bottom: 20px; }
+  .token-digit {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Baloo 2', cursive;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .token-digit.filled { border-color: var(--amarelo); background: rgba(245,197,24,0.12); color: var(--amarelo); }
+
+  /* ======== APP HEADER ======== */
+  .app-header {
+    padding: 14px 18px 12px;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .app-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .app-logo .liso { color: var(--laranja); }
+  .avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--laranja) 0%, var(--amarelo) 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Baloo 2', cursive;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* ======== APP CONTENT ======== */
+  .app-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px;
+    background: var(--areia);
+    scrollbar-width: none;
+  }
+  .app-content::-webkit-scrollbar { display: none; }
+
+  /* Summary card — miolo de caju */
+  .summary-card {
+    background: linear-gradient(135deg, var(--laranja) 0%, #C03A00 100%);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(232,80,10,0.35);
+  }
+  .summary-card::before {
+    content: '🌵';
+    position: absolute;
+    font-size: 80px;
+    top: -10px;
+    right: -10px;
+    opacity: 0.12;
+  }
+  .summary-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .summary-value {
+    font-family: 'Baloo 2', cursive;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .summary-value span { font-size: 15px; font-weight: 500; opacity: 0.7; }
+  .summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--white);
+    margin-top: 8px;
+    backdrop-filter: blur(4px);
+  }
+  .summary-stats {
+    display: flex;
+    gap: 0;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .stat { flex: 1; }
+  .stat + .stat { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; }
+  .stat-label { font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; font-weight: 700; }
+  .stat-value { font-family: 'Baloo 2', cursive; font-size: 14px; font-weight: 700; color: var(--white); }
+  .stat-value.red { color: #FFB3A0; }
+  .stat-value.green { color: #A8FFB3; }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-action {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--laranja);
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+  }
+
+  /* Category card */
+  .category-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .category-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .category-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .cat-info { display: flex; align-items: center; gap: 10px; }
+  .cat-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .cat-name { font-family: 'Baloo 2', cursive; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .cat-txn { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .cat-amount { text-align: right; }
+  .cat-balance { font-family: 'Baloo 2', cursive; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .cat-used { font-size: 11px; color: var(--muted); }
+  .progress-bar { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; }
+
+  /* Alert card */
+  .alert-card {
+    background: var(--vermelho-pale);
+    border: 1.5px solid rgba(192,37,42,0.2);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-text { font-size: 12px; color: var(--vermelho); line-height: 1.4; font-weight: 600; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    background: var(--white);
+    border-top: 2px solid var(--border);
+    padding: 8px 0 18px;
+    display: flex;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 5px 0;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-family: 'Baloo 2', cursive;
+    transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--laranja); }
+  .nav-icon { font-size: 20px; }
+  .nav-fab { flex: 1; display: flex; justify-content: center; align-items: flex-start; }
+  .fab {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--laranja) 0%, var(--amarelo) 100%);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-top: -22px;
+    box-shadow: 0 8px 20px rgba(232,80,10,0.45);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .fab:hover { transform: translateY(-2px); }
+
+  /* ======== CHAT SCREEN ======== */
+  .chat-header {
+    padding: 12px 16px;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-back { font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+  .chat-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--laranja), var(--amarelo));
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .chat-name { font-family: 'Baloo 2', cursive; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .chat-status { font-size: 11px; color: var(--verde); font-weight: 600; }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--areia);
+    scrollbar-width: none;
+  }
+  .msg { max-width: 82%; }
+  .msg-bot { align-self: flex-start; }
+  .msg-user { align-self: flex-end; }
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .msg-bot .msg-bubble {
+    background: var(--white);
+    color: var(--ink);
+    border: 1.5px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-user .msg-bubble {
+    background: linear-gradient(135deg, var(--laranja) 0%, #C03A00 100%);
+    color: var(--white);
+    border-bottom-right-radius: 4px;
+  }
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 3px; font-weight: 600; }
+  .msg-user .msg-time { text-align: right; }
+  .success-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--verde-pale);
+    border: 1px solid rgba(30,140,69,0.2);
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--verde);
+  }
+  .error-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--vermelho-pale);
+    border: 1px solid rgba(192,37,42,0.2);
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--vermelho);
+  }
+  .chat-input-area {
+    background: var(--white);
+    border-top: 2px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .chat-input {
+    flex: 1;
+    background: var(--areia);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 9px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+  }
+  .chat-send {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--laranja), var(--amarelo));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(232,80,10,0.3);
+  }
+
+  /* ======== CATEGORIES SCREEN ======== */
+  .cat-form-card {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 18px;
+    border: 1.5px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .form-title { font-family: 'Baloo 2', cursive; font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+  .form-row { margin-bottom: 12px; }
+  .form-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+  .form-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--areia);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--laranja); }
+  .icon-picker { display: flex; gap: 7px; flex-wrap: wrap; }
+  .icon-opt {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--areia);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .icon-opt.sel { border-color: var(--laranja); background: var(--laranja-pale); }
+  .btn-save {
+    width: 100%;
+    background: linear-gradient(135deg, var(--laranja) 0%, var(--amarelo) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'Baloo 2', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    box-shadow: 0 4px 14px rgba(232,80,10,0.3);
+  }
+
+  /* ======== DESKTOP LAYOUT ======== */
+  .desktop-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--ink);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+  }
+  .desktop-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--white);
+    padding: 0 20px;
+    margin-bottom: 28px;
+    line-height: 1.2;
+  }
+  .desktop-logo .liso { color: var(--amarelo); }
+  .desktop-logo-sub { font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 500; display: block; font-family: 'Nunito', sans-serif; }
+  .desktop-nav { flex: 1; }
+  .desktop-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-right: 3px solid transparent;
+    font-family: 'Nunito', sans-serif;
+  }
+  .desktop-nav-item:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
+  .desktop-nav-item.active { color: var(--amarelo); background: rgba(245,197,24,0.1); border-right-color: var(--amarelo); }
+  .desktop-nav-item .nav-emoji { font-size: 16px; }
+  .desktop-user {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    font-family: 'Nunito', sans-serif;
+  }
+  .desktop-avatar {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--laranja), var(--amarelo));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Baloo 2', cursive;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+
+  .desktop-main { flex: 1; overflow-y: auto; background: var(--areia); padding: 24px; scrollbar-width: none; }
+  .desktop-main::-webkit-scrollbar { display: none; }
+  .desktop-greeting { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 2px; }
+  .desktop-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; font-weight: 600; }
+
+  .desktop-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .d-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+  }
+  .d-card.accent {
+    background: linear-gradient(135deg, var(--laranja) 0%, #C03A00 100%);
+    border: none;
+    box-shadow: 0 6px 20px rgba(232,80,10,0.35);
+  }
+  .d-card-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .d-card.accent .d-card-label { color: rgba(255,255,255,0.55); }
+  .d-card-value { font-family: 'Baloo 2', cursive; font-size: 24px; font-weight: 800; color: var(--ink); }
+  .d-card.accent .d-card-value { color: var(--white); }
+  .d-card-value.red { color: var(--vermelho); }
+  .d-card-value.green { color: var(--verde); }
+
+  .d-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .d-cat-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+  }
+  .d-cat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .d-cat-name { font-family: 'Baloo 2', cursive; font-size: 13px; font-weight: 700; color: var(--ink); }
+
+  @media (max-width: 900px) { .desktop-wrap { display: none; } }
+  @media (max-width: 480px) { .mobile-frame { width: 100%; max-width: 375px; } }
+</style>
+</head>
+<body>
+
+<!-- ======== PAGE HEADER ======== -->
+<div class="page-header">
+  <div class="page-header-logo">Tá <span>Liso</span> 💸</div>
+  <div class="page-header-sub">Controle financeiro do jeito nordestino</div>
+  <div class="bandeirola-row">
+    <div class="bandeirola" style="border-top-color:#E8500A"></div>
+    <div class="bandeirola" style="border-top-color:#F5C518"></div>
+    <div class="bandeirola" style="border-top-color:#1A5C9E"></div>
+    <div class="bandeirola" style="border-top-color:#1E8C45"></div>
+    <div class="bandeirola" style="border-top-color:#C0252A"></div>
+    <div class="bandeirola" style="border-top-color:#6B2D8B"></div>
+    <div class="bandeirola" style="border-top-color:#F5C518"></div>
+    <div class="bandeirola" style="border-top-color:#E8500A"></div>
+    <div class="bandeirola" style="border-top-color:#1A5C9E"></div>
+    <div class="bandeirola" style="border-top-color:#1E8C45"></div>
+    <div class="bandeirola" style="border-top-color:#C0252A"></div>
+    <div class="bandeirola" style="border-top-color:#6B2D8B"></div>
+    <div class="bandeirola" style="border-top-color:#F5C518"></div>
+    <div class="bandeirola" style="border-top-color:#E8500A"></div>
+    <div class="bandeirola" style="border-top-color:#1A5C9E"></div>
+  </div>
+</div>
+
+<div class="device-grid">
+
+  <!-- ======== MOBILE ======== -->
+  <div class="mobile-wrap">
+    <div class="device-label">📱 Mobile</div>
+    <div class="mobile-frame">
+      <div class="mobile-notch"><div class="notch-cam"></div></div>
+      <div class="mobile-screen">
+
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons"><span>▲▲▲</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab active" onclick="showScreen('login')">Login</div>
+          <div class="tab" onclick="showScreen('token')">Token</div>
+          <div class="tab" onclick="showScreen('home')">Início</div>
+          <div class="tab" onclick="showScreen('chat')">Chat</div>
+          <div class="tab" onclick="showScreen('cats')">Categ.</div>
+        </div>
+
+        <!-- ========== LOGIN ========== -->
+        <div class="screen active" id="screen-login">
+          <div class="login-screen">
+            <div class="login-bandeirolas">
+              <div class="login-bandeirola" style="background:#E8500A"></div>
+              <div class="login-bandeirola" style="background:#F5C518"></div>
+              <div class="login-bandeirola" style="background:#1A5C9E"></div>
+              <div class="login-bandeirola" style="background:#1E8C45"></div>
+              <div class="login-bandeirola" style="background:#C0252A"></div>
+              <div class="login-bandeirola" style="background:#6B2D8B"></div>
+              <div class="login-bandeirola" style="background:#F5C518"></div>
+              <div class="login-bandeirola" style="background:#E8500A"></div>
+            </div>
+            <div class="star-bg">⭐</div>
+            <div class="login-logo">
+              Tá <span class="liso">Liso</span> <span class="emoji">💸</span>
+            </div>
+            <div class="login-tagline">"Bora organizar o dinheiro, visse?"</div>
+            <div class="login-form-area">
+              <div class="login-title">Oxente, bora entrar!</div>
+              <div class="login-sub">Coloca seu e-mail aí que a gente manda um código. Sem senha, sem complicação.</div>
+              <div class="input-group">
+                <label class="input-label">Seu e-mail</label>
+                <input class="input-field" type="email" placeholder="voce@email.com" value="joao@email.com">
+              </div>
+              <button class="btn-primary">Mandar o código 🚀</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TOKEN ========== -->
+        <div class="screen" id="screen-token">
+          <div class="login-screen">
+            <div class="login-bandeirolas">
+              <div class="login-bandeirola" style="background:#E8500A"></div>
+              <div class="login-bandeirola" style="background:#F5C518"></div>
+              <div class="login-bandeirola" style="background:#1A5C9E"></div>
+              <div class="login-bandeirola" style="background:#1E8C45"></div>
+              <div class="login-bandeirola" style="background:#C0252A"></div>
+              <div class="login-bandeirola" style="background:#6B2D8B"></div>
+              <div class="login-bandeirola" style="background:#F5C518"></div>
+              <div class="login-bandeirola" style="background:#E8500A"></div>
+            </div>
+            <div class="star-bg">⭐</div>
+            <div class="login-logo">Tá <span class="liso">Liso</span> <span class="emoji">💸</span></div>
+            <div class="login-tagline">"Bora organizar o dinheiro, visse?"</div>
+            <div class="login-form-area">
+              <div class="login-title">Código chegou! 📬</div>
+              <div class="login-sub">Olha no teu e-mail e digita os 6 números aqui.</div>
+              <div class="token-hint">
+                <span>📨</span>
+                <span class="token-hint-text">Código enviado pra joao@email.com — chega rapidinho!</span>
+              </div>
+              <div class="token-input">
+                <div class="token-digit filled">4</div>
+                <div class="token-digit filled">8</div>
+                <div class="token-digit filled">2</div>
+                <div class="token-digit filled">1</div>
+                <div class="token-digit">_</div>
+                <div class="token-digit">_</div>
+              </div>
+              <button class="btn-primary">Entrar de vez! 🎉</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== HOME ========== -->
+        <div class="screen" id="screen-home">
+          <div class="app-header">
+            <div class="app-logo">Tá <span class="liso">Liso</span> 💸</div>
+            <div class="avatar">JA</div>
+          </div>
+          <div class="app-content">
+
+            <div class="summary-card">
+              <div class="summary-label">Saldo disponível no mês</div>
+              <div class="summary-value"><span>R$</span> 2.850<span>,00</span></div>
+              <div class="summary-badge">📅 Fevereiro 2025</div>
+              <div class="summary-stats">
+                <div class="stat">
+                  <div class="stat-label">Orçado</div>
+                  <div class="stat-value">R$ 4.500</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Gasto</div>
+                  <div class="stat-value red">R$ 1.650</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Sobrou</div>
+                  <div class="stat-value green">R$ 2.850</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert-card">
+              <span style="font-size:20px">⚠️</span>
+              <div class="alert-text">Lazer tá quase no limite! Só sobrou R$ 50,00, cabra!</div>
+            </div>
+
+            <div class="section-title">
+              Suas Categorias
+              <span class="section-action">+ Nova</span>
+            </div>
+            <div class="category-list">
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#FEF0E8">🛒</div>
+                    <div>
+                      <div class="cat-name">Feira e Mercado</div>
+                      <div class="cat-txn">8 lançamentos</div>
+                    </div>
+                  </div>
+                  <div class="cat-amount">
+                    <div class="cat-balance">R$ 800</div>
+                    <div class="cat-used">R$ 200 gasto</div>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:20%;background:var(--verde)"></div>
+                </div>
+              </div>
+
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#FEFAE8">🚌</div>
+                    <div>
+                      <div class="cat-name">Transporte</div>
+                      <div class="cat-txn">3 lançamentos</div>
+                    </div>
+                  </div>
+                  <div class="cat-amount">
+                    <div class="cat-balance">R$ 650</div>
+                    <div class="cat-used">R$ 350 gasto</div>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:35%;background:var(--amarelo)"></div>
+                </div>
+              </div>
+
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#FAEAEA">🎉</div>
+                    <div>
+                      <div class="cat-name">Lazer & Forró</div>
+                      <div class="cat-txn">5 lançamentos</div>
+                    </div>
+                  </div>
+                  <div class="cat-amount">
+                    <div class="cat-balance" style="color:var(--vermelho)">R$ 50</div>
+                    <div class="cat-used" style="color:var(--vermelho)">R$ 450 gasto</div>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:90%;background:var(--vermelho)"></div>
+                </div>
+              </div>
+
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#E8F7EE">🏥</div>
+                    <div>
+                      <div class="cat-name">Saúde</div>
+                      <div class="cat-txn">1 lançamento</div>
+                    </div>
+                  </div>
+                  <div class="cat-amount">
+                    <div class="cat-balance">R$ 900</div>
+                    <div class="cat-used">R$ 100 gasto</div>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:10%;background:var(--verde)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item active">
+              <span class="nav-icon">🏠</span>Início
+            </div>
+            <div class="nav-item" onclick="showScreen('cats')">
+              <span class="nav-icon">📂</span>Categ.
+            </div>
+            <div class="nav-fab" onclick="showScreen('chat')">
+              <div class="fab">💬</div>
+            </div>
+            <div class="nav-item">
+              <span class="nav-icon">📊</span>Resumo
+            </div>
+            <div class="nav-item">
+              <span class="nav-icon">⚙️</span>Config.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== CHAT ========== -->
+        <div class="screen" id="screen-chat">
+          <div class="chat-header">
+            <span class="chat-back" onclick="showScreen('home')">‹</span>
+            <div class="chat-avatar">🤖</div>
+            <div>
+              <div class="chat-name">Assistente do Tá Liso</div>
+              <div class="chat-status">● Online, visse!</div>
+            </div>
+          </div>
+
+          <div class="chat-messages">
+            <div class="msg msg-bot">
+              <div class="msg-bubble">
+                Eita, bão dia! 🌞<br>
+                Manda seus gastos assim: <strong>descrição valor categoria</strong><br><br>
+                Ex: <em>Feira 200 alimentação</em> ou <em>Uber 45 transporte</em>
+              </div>
+              <div class="msg-time">09:30</div>
+            </div>
+
+            <div class="msg msg-user">
+              <div class="msg-bubble">Mercado 200 alimentação</div>
+              <div class="msg-time">09:41</div>
+            </div>
+
+            <div class="msg msg-bot">
+              <div class="msg-bubble">
+                Anotado, cabra! ✅
+                <div class="success-chip">✅ − R$ 200,00 em Feira e Mercado</div>
+                <br>
+                Saldo restante: <strong>R$ 800,00</strong> — ainda tá tranquilo!
+              </div>
+              <div class="msg-time">09:41</div>
+            </div>
+
+            <div class="msg msg-user">
+              <div class="msg-bubble">Show de forró 500 lazer</div>
+              <div class="msg-time">09:42</div>
+            </div>
+
+            <div class="msg msg-bot">
+              <div class="msg-bubble">
+                Eita, lasqueira! ⚠️
+                <div class="error-chip">⚠️ Saldo insuficiente em Lazer & Forró</div>
+                <br>
+                Você tem só <strong>R$ 50,00</strong> mas quer gastar <strong>R$ 500,00</strong>.<br><br>
+                Vai encarar mesmo assim?
+              </div>
+              <div class="msg-time">09:42</div>
+            </div>
+
+            <div style="display:flex;gap:8px">
+              <button style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--border);background:white;font-family:'Baloo 2',cursive;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer">Deixa pra lá</button>
+              <button style="flex:1;padding:9px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--vermelho),#8B1010);font-family:'Baloo 2',cursive;font-size:12px;font-weight:700;color:white;cursor:pointer">Confirmar 🤞</button>
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <input class="chat-input" placeholder="Ex: Tapioca 15 alimentação..." value="">
+            <button class="chat-send">➤</button>
+          </div>
+        </div>
+
+        <!-- ========== CATEGORIES ========== -->
+        <div class="screen" id="screen-cats">
+          <div class="app-header">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:22px;cursor:pointer;color:var(--muted)" onclick="showScreen('home')">‹</span>
+              <div class="app-logo" style="font-size:16px">Categorias</div>
+            </div>
+            <div style="font-size:22px;cursor:pointer;color:var(--laranja)">＋</div>
+          </div>
+
+          <div class="app-content">
+            <div class="cat-form-card">
+              <div class="form-title">➕ Nova Categoria</div>
+              <div class="form-row">
+                <label class="form-label">Nome da categoria</label>
+                <input class="form-input" type="text" placeholder="Ex: Feira, Forró, Uber..." value="Feira e Mercado">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Orçamento do mês (R$)</label>
+                <input class="form-input" type="number" placeholder="0,00" value="1000">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Escolhe um ícone</label>
+                <div class="icon-picker">
+                  <div class="icon-opt sel">🛒</div>
+                  <div class="icon-opt">🚌</div>
+                  <div class="icon-opt">🏥</div>
+                  <div class="icon-opt">🎉</div>
+                  <div class="icon-opt">📚</div>
+                  <div class="icon-opt">✈️</div>
+                  <div class="icon-opt">🏠</div>
+                  <div class="icon-opt">🌵</div>
+                </div>
+              </div>
+              <button class="btn-save">Salvar Categoria 💾</button>
+            </div>
+
+            <div class="section-title">Suas Categorias</div>
+            <div class="category-list">
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#FEF0E8">🛒</div>
+                    <div>
+                      <div class="cat-name">Feira e Mercado</div>
+                      <div class="cat-txn">Orçamento: R$ 1.000</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <span style="font-size:17px;cursor:pointer;color:var(--muted)">✏️</span>
+                    <span style="font-size:17px;cursor:pointer;color:var(--vermelho)">🗑️</span>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:20%;background:var(--verde)"></div>
+                </div>
+              </div>
+              <div class="category-card">
+                <div class="cat-header">
+                  <div class="cat-info">
+                    <div class="cat-icon" style="background:#FEFAE8">🚌</div>
+                    <div>
+                      <div class="cat-name">Transporte</div>
+                      <div class="cat-txn">Orçamento: R$ 1.000</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <span style="font-size:17px;cursor:pointer;color:var(--muted)">✏️</span>
+                    <span style="font-size:17px;cursor:pointer;color:var(--vermelho)">🗑️</span>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:35%;background:var(--amarelo)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item" onclick="showScreen('home')">
+              <span class="nav-icon">🏠</span>Início
+            </div>
+            <div class="nav-item active">
+              <span class="nav-icon">📂</span>Categ.
+            </div>
+            <div class="nav-fab" onclick="showScreen('chat')">
+              <div class="fab">💬</div>
+            </div>
+            <div class="nav-item">
+              <span class="nav-icon">📊</span>Resumo
+            </div>
+            <div class="nav-item">
+              <span class="nav-icon">⚙️</span>Config.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== DESKTOP ======== -->
+  <div class="desktop-wrap">
+    <div class="device-label">🖥️ Desktop — Resumo Financeiro</div>
+    <div class="desktop-frame">
+      <div class="desktop-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <div class="desktop-url">app.talisoappp.com.br/resumo</div>
+      </div>
+      <div class="desktop-screen">
+        <div class="desktop-sidebar">
+          <div class="desktop-logo">
+            Tá <span class="liso">Liso</span> 💸
+            <span class="desktop-logo-sub">controle financeiro</span>
+          </div>
+          <nav class="desktop-nav">
+            <div class="desktop-nav-item"><span class="nav-emoji">🏠</span>Início</div>
+            <div class="desktop-nav-item active"><span class="nav-emoji">📊</span>Resumo</div>
+            <div class="desktop-nav-item"><span class="nav-emoji">📂</span>Categorias</div>
+            <div class="desktop-nav-item"><span class="nav-emoji">💬</span>Chat</div>
+            <div class="desktop-nav-item"><span class="nav-emoji">📋</span>Lançamentos</div>
+            <div class="desktop-nav-item"><span class="nav-emoji">⚙️</span>Configurações</div>
+          </nav>
+          <div class="desktop-user">
+            <div class="desktop-avatar">JA</div>
+            <div>
+              <div style="color:rgba(255,255,255,0.8)">João Alves</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.3)">Recife, PE 🌵</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="desktop-main">
+          <div class="desktop-greeting">E aí, João! 👋</div>
+          <div class="desktop-sub">Fevereiro 2025 · Recife, Pernambuco</div>
+
+          <div class="desktop-cards">
+            <div class="d-card accent">
+              <div class="d-card-label">Saldo disponível</div>
+              <div class="d-card-value">R$ 2.850</div>
+            </div>
+            <div class="d-card">
+              <div class="d-card-label">Total orçado</div>
+              <div class="d-card-value">R$ 4.500</div>
+            </div>
+            <div class="d-card">
+              <div class="d-card-label">Total gasto</div>
+              <div class="d-card-value red">R$ 1.650</div>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-bottom:12px;font-family:'Baloo 2',cursive;font-size:12px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;font-weight:700">
+            Saldo por Categoria
+          </div>
+          <div class="d-cat-grid">
+            <div class="d-cat-card">
+              <div class="d-cat-top">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">🛒</span>
+                  <div class="d-cat-name">Feira e Mercado</div>
+                </div>
+                <span style="font-size:10px;color:var(--verde);font-weight:700;background:var(--verde-pale);padding:3px 8px;border-radius:20px">20% gasto</span>
+              </div>
+              <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:3px">R$ 800</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">de R$ 1.000 · gastou R$ 200</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--verde)"></div></div>
+            </div>
+            <div class="d-cat-card">
+              <div class="d-cat-top">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">🚌</span>
+                  <div class="d-cat-name">Transporte</div>
+                </div>
+                <span style="font-size:10px;color:#9A7000;font-weight:700;background:var(--amarelo-pale);padding:3px 8px;border-radius:20px">35% gasto</span>
+              </div>
+              <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:3px">R$ 650</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">de R$ 1.000 · gastou R$ 350</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:35%;background:var(--amarelo)"></div></div>
+            </div>
+            <div class="d-cat-card">
+              <div class="d-cat-top">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">🎉</span>
+                  <div class="d-cat-name">Lazer & Forró</div>
+                </div>
+                <span style="font-size:10px;color:var(--vermelho);font-weight:700;background:var(--vermelho-pale);padding:3px 8px;border-radius:20px">90% gasto</span>
+              </div>
+              <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--vermelho);margin-bottom:3px">R$ 50</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">de R$ 500 · gastou R$ 450</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:90%;background:var(--vermelho)"></div></div>
+            </div>
+            <div class="d-cat-card">
+              <div class="d-cat-top">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">🏥</span>
+                  <div class="d-cat-name">Saúde</div>
+                </div>
+                <span style="font-size:10px;color:var(--verde);font-weight:700;background:var(--verde-pale);padding:3px 8px;border-radius:20px">10% gasto</span>
+              </div>
+              <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:3px">R$ 900</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">de R$ 1.000 · gastou R$ 100</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:10%;background:var(--verde)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    const map = { login: 0, token: 1, home: 2, chat: 3, cats: 4 };
+    tabs.forEach((t, i) => t.classList.toggle('active', i === map[id]));
+  }
+  tabs.forEach((tab, i) => {
+    const screens = ['login', 'token', 'home', 'chat', 'cats'];
+    tab.onclick = () => showScreen(screens[i]);
+  });
+  document.querySelectorAll('.icon-opt').forEach(opt => {
+    opt.onclick = () => {
+      document.querySelectorAll('.icon-opt').forEach(o => o.classList.remove('sel'));
+      opt.classList.add('sel');
+    };
+  });
+</script>
+</body>
+</html>
