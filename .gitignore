@@ -39,3 +39,11 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 mockup/*
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Generated API hooks (regenerate with npm run gen:api)
+src/api/generated/

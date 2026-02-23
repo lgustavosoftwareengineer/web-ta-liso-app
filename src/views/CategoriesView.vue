@@ -1,30 +1,85 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import BottomNav from '@/components/BottomNav.vue'
+import {
+  useListCategoriesApiCategoriesGet,
+  useCreateCategoryApiCategoriesPost,
+  useDeleteCategoryApiCategoriesCategoryIdDelete,
+  getListCategoriesApiCategoriesGetQueryKey,
+} from '@/api/generated/categories/categories'
+import type { CategoryResponse } from '@/api/generated/táLisoAPI.schemas'
+import { useApiError } from '@/composables/useApiError'
+import AppSpinner from '@/components/AppSpinner.vue'
 
-const categoryName = ref('Feira e Mercado')
-const categoryBudget = ref('1000')
+const queryClient = useQueryClient()
+const { getErrorMessage } = useApiError()
+
+const categoryName = ref('')
+const categoryBudget = ref('')
 const selectedIcon = ref('🛒')
+const createError = ref('')
 
 const iconOptions = ['🛒', '🚌', '🏥', '🎉', '📚', '✈️', '🏠', '🌵']
 
-const categories = [
-  { name: 'Feira e Mercado', icon: '🛒', iconBg: '#FEF0E8', budget: 'R$ 1.000', pct: 20, barColor: '#1E8C45' },
-  { name: 'Transporte', icon: '🚌', iconBg: '#FEFAE8', budget: 'R$ 1.000', pct: 35, barColor: '#F5C518' },
-]
+const { data: categories, isLoading } = useListCategoriesApiCategoriesGet()
+
+const createCategory = useCreateCategoryApiCategoriesPost({
+  mutation: {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
+      categoryName.value = ''
+      categoryBudget.value = ''
+      selectedIcon.value = '🛒'
+      createError.value = ''
+    },
+    onError: (e) => {
+      createError.value = getErrorMessage(e)
+    },
+  },
+})
+
+const deleteCategory = useDeleteCategoryApiCategoriesCategoryIdDelete({
+  mutation: {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
+    },
+  },
+})
+
+function pct(cat: CategoryResponse): number {
+  const initial = parseFloat(cat.initial_amount)
+  const balance = parseFloat(cat.current_balance)
+  if (!initial) return 0
+  return Math.min(100, Math.round(((initial - balance) / initial) * 100))
+}
+
+function barColor(p: number): string {
+  if (p >= 90) return '#C0252A'
+  if (p >= 70) return '#F5C518'
+  return '#1E8C45'
+}
+
+function formatBRL(value: string | number): string {
+  return parseFloat(String(value)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function saveCategory() {
+  if (!categoryName.value.trim() || !categoryBudget.value) return
+  createCategory.mutate({
+    data: {
+      name: categoryName.value.trim(),
+      icon: selectedIcon.value,
+      initial_amount: parseFloat(categoryBudget.value),
+    },
+  })
+}
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-[#F5EDD8]">
     <header class="flex items-center justify-between px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3] bg-white">
       <span class="text-xl font-extrabold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">Categorias</span>
-      <button
-        type="button"
-        class="text-2xl text-[#E8500A] leading-none cursor-pointer"
-        aria-label="Nova categoria"
-      >
-        ＋
-      </button>
     </header>
 
     <main class="flex-1 overflow-y-auto p-4">
@@ -72,12 +127,18 @@ const categories = [
             </button>
           </div>
         </div>
+        <p v-if="createError" class="text-xs text-[#C0252A] font-semibold mb-2">{{ createError }}</p>
         <button
           type="button"
-          class="w-full py-3 rounded-[10px] text-white text-sm font-bold border-0 cursor-pointer mt-1"
+          class="w-full py-3 rounded-[10px] text-white text-sm font-bold border-0 cursor-pointer mt-1 disabled:opacity-50"
           style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A 0%, #F5C518 100%); box-shadow: 0 4px 14px rgba(232,80,10,0.3)"
+          :disabled="createCategory.isPending.value"
+          @click="saveCategory"
         >
-          Salvar Categoria 💾
+          <span class="flex items-center justify-center gap-2">
+            <AppSpinner v-if="createCategory.isPending.value" size="sm" />
+            {{ createCategory.isPending.value ? 'Salvando...' : 'Salvar Categoria 💾' }}
+          </span>
         </button>
       </div>
 
@@ -85,35 +146,53 @@ const categories = [
       <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
         Suas Categorias
       </div>
-      <div class="flex flex-col gap-2.5">
+
+      <div v-if="isLoading" class="flex flex-col gap-2.5">
+        <div v-for="i in 3" :key="i" class="rounded-2xl p-3.5 border border-[#E5D9C3] bg-white h-[80px] animate-pulse" />
+      </div>
+
+      <div
+        v-else-if="!categories?.length"
+        class="rounded-2xl p-5 border border-[#E5D9C3] bg-white text-center"
+      >
+        <p class="text-sm text-[#7A6E5F]">Nenhuma categoria criada ainda.</p>
+      </div>
+
+      <div v-else class="flex flex-col gap-2.5">
         <div
           v-for="cat in categories"
-          :key="cat.name"
+          :key="cat.id"
           class="rounded-2xl p-3.5 border border-[#E5D9C3] bg-white cursor-pointer transition-all hover:-translate-y-px hover:shadow-md"
         >
           <div class="flex justify-between items-center mb-2.5">
             <div class="flex items-center gap-2.5">
-              <div
-                class="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center text-lg shrink-0"
-                :style="{ background: cat.iconBg }"
-              >
-                {{ cat.icon }}
+              <div class="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center text-lg shrink-0 bg-[#FEF0E8]">
+                {{ cat.icon ?? '📦' }}
               </div>
               <div>
                 <div class="text-sm font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">{{ cat.name }}</div>
-                <div class="text-[11px] text-[#7A6E5F] mt-0.5">Orçamento: {{ cat.budget }}</div>
+                <div class="text-[11px] text-[#7A6E5F] mt-0.5">Orçamento: R$ {{ formatBRL(cat.initial_amount) }}</div>
               </div>
             </div>
             <div class="flex gap-2 items-center">
-              <span class="text-[17px] text-[#7A6E5F] cursor-pointer">✏️</span>
-              <span class="text-[17px] text-[#C0252A] cursor-pointer">🗑️</span>
+              <button
+                type="button"
+                class="text-[17px] text-[#C0252A] cursor-pointer disabled:opacity-40"
+                :disabled="deleteCategory.isPending.value"
+                @click="deleteCategory.mutate({ categoryId: cat.id })"
+              >
+                🗑️
+              </button>
             </div>
           </div>
           <div class="h-1.5 rounded-full overflow-hidden bg-[#E5D9C3]">
             <div
               class="h-full rounded-full transition-all"
-              :style="{ width: cat.pct + '%', background: cat.barColor }"
+              :style="{ width: pct(cat) + '%', background: barColor(pct(cat)) }"
             />
+          </div>
+          <div class="text-[10px] text-[#7A6E5F] font-semibold mt-1">
+            R$ {{ formatBRL(parseFloat(cat.initial_amount) - parseFloat(cat.current_balance)) }} gasto · {{ pct(cat) }}% usado
           </div>
         </div>
       </div>

@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
+import { useListCategoriesApiCategoriesGet } from '@/api/generated/categories/categories'
+import { useListTransactionsApiTransactionsGet } from '@/api/generated/transactions/transactions'
+import type { CategoryResponse, TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
 
-const currentDate = ref(new Date(2025, 1)) // Fevereiro 2025
+const { data: categories, isLoading: loadingCats } = useListCategoriesApiCategoriesGet()
+const { data: transactions, isLoading: loadingTxns } = useListTransactionsApiTransactionsGet()
+
+const isLoading = computed(() => loadingCats.value || loadingTxns.value)
+
+// Month navigation
+const currentDate = ref(new Date())
 
 const monthLabel = computed(() => {
   const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -16,31 +25,74 @@ function nextMonth() {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1)
 }
 
-const categorySpending = [
-  { name: 'Feira e Mercado', icon: '🛒', spent: 'R$ 200', budget: 'R$ 1.000', pct: 20, barColor: '#1E8C45', isWarning: false },
-  { name: 'Transporte', icon: '🚌', spent: 'R$ 350', budget: 'R$ 1.000', pct: 35, barColor: '#F5C518', isWarning: false },
-  { name: 'Lazer & Forró', icon: '🎉', spent: 'R$ 450', budget: 'R$ 500', pct: 90, barColor: '#C0252A', isWarning: true },
-  { name: 'Saúde', icon: '🏥', spent: 'R$ 100', budget: 'R$ 1.000', pct: 10, barColor: '#1E8C45', isWarning: false },
-]
+// Filter transactions by selected month
+const filteredTxns = computed(() => {
+  if (!transactions.value) return []
+  const y = currentDate.value.getFullYear()
+  const m = currentDate.value.getMonth()
+  return transactions.value.filter((t) => {
+    const d = new Date(t.created_at)
+    return d.getFullYear() === y && d.getMonth() === m
+  })
+})
 
-const entriesByDay = [
-  { day: '21 de fevereiro', items: [{ title: 'Mercado', category: 'Feira e Mercado', icon: '🛒', iconBg: '#FEF0E8', value: '− R$ 200' }] },
-  { day: '20 de fevereiro', items: [
-    { title: 'Uber', category: 'Transporte', icon: '🚌', iconBg: '#FEFAE8', value: '− R$ 45' },
-    { title: 'Ônibus', category: 'Transporte', icon: '🚌', iconBg: '#FEFAE8', value: '− R$ 5' },
-  ]},
-  { day: '18 de fevereiro', items: [
-    { title: 'Forró do Beto', category: 'Lazer & Forró', icon: '🎉', iconBg: '#FAEAEA', value: '− R$ 80' },
-    { title: 'Cerveja na feira', category: 'Lazer & Forró', icon: '🎉', iconBg: '#FAEAEA', value: '− R$ 30' },
-  ]},
-  { day: '15 de fevereiro', items: [{ title: 'Farmácia', category: 'Saúde', icon: '🏥', iconBg: '#E8F7EE', value: '− R$ 100' }] },
-  { day: '12 de fevereiro', items: [{ title: 'Uber pro aeroporto', category: 'Transporte', icon: '🚌', iconBg: '#FEFAE8', value: '− R$ 90' }] },
-  { day: '10 de fevereiro', items: [{ title: 'Cinema', category: 'Lazer & Forró', icon: '🎉', iconBg: '#FAEAEA', value: '− R$ 40' }] },
-  { day: '5 de fevereiro', items: [
-    { title: 'Feira livre', category: 'Feira e Mercado', icon: '🛒', iconBg: '#FEF0E8', value: '− R$ 120' },
-    { title: 'Ônibus', category: 'Transporte', icon: '🚌', iconBg: '#FEFAE8', value: '− R$ 5' },
-  ]},
-]
+// Category map for quick lookups
+const catMap = computed(() => {
+  const map: Record<string, CategoryResponse> = {}
+  for (const c of categories.value ?? []) map[c.id] = c
+  return map
+})
+
+// Summary numbers
+const totalBudget = computed(() =>
+  (categories.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0),
+)
+const totalSpent = computed(() =>
+  filteredTxns.value.reduce((s, t) => s + parseFloat(t.amount), 0),
+)
+const totalRemaining = computed(() => totalBudget.value - totalSpent.value)
+
+// Spending by category for selected month
+const categorySpending = computed(() => {
+  const map: Record<string, number> = {}
+  for (const t of filteredTxns.value) {
+    if (t.category_id) map[t.category_id] = (map[t.category_id] ?? 0) + parseFloat(t.amount)
+  }
+  return (categories.value ?? [])
+    .map((cat) => {
+      const spent = map[cat.id] ?? 0
+      const initial = parseFloat(cat.initial_amount)
+      const pct = initial ? Math.min(100, Math.round((spent / initial) * 100)) : 0
+      return {
+        cat,
+        spent,
+        pct,
+        barColor: pct >= 90 ? '#C0252A' : pct >= 70 ? '#F5C518' : '#1E8C45',
+        isWarning: pct >= 90,
+      }
+    })
+    .filter((r) => r.spent > 0)
+})
+
+// Transactions grouped by day
+const entriesByDay = computed(() => {
+  const groups: Record<string, TransactionResponse[]> = {}
+  for (const t of [...filteredTxns.value].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )) {
+    const dayKey = new Date(t.created_at).toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+    })
+    if (!groups[dayKey]) groups[dayKey] = []
+    groups[dayKey].push(t)
+  }
+  return Object.entries(groups).map(([day, items]) => ({ day, items }))
+})
+
+function fmt(value: number): string {
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 </script>
 
 <template>
@@ -84,51 +136,65 @@ const entriesByDay = [
           Resumo · {{ monthLabel }}
         </div>
         <div class="text-white text-[34px] font-extrabold leading-tight tracking-tight" style="font-family: 'Baloo 2', cursive">
-          <span class="text-[15px] font-medium opacity-70">R$</span> 2.850<span class="text-[15px] font-medium opacity-70">,00</span>
+          <span v-if="isLoading" class="text-[18px] opacity-70">Carregando...</span>
+          <template v-else>
+            <span class="text-[15px] font-medium opacity-70">R$</span>
+            {{ fmt(totalRemaining) }}
+          </template>
         </div>
         <div class="inline-flex items-center gap-1.5 rounded-full py-1 px-2.5 mt-2 text-[11px] font-bold text-white bg-white/15 backdrop-blur">
           💰 saldo restante no mês
         </div>
         <div class="flex gap-0 mt-3.5 pt-3.5 border-t border-white/15">
-          <div class="flex-1">
-            <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">Orçado</div>
-            <div class="text-sm font-bold text-white" style="font-family: 'Baloo 2', cursive">R$ 4.500</div>
-          </div>
-          <div class="flex-1 border-l border-white/15 pl-3">
-            <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">Gasto</div>
-            <div class="text-sm font-bold text-[#FFB3A0]" style="font-family: 'Baloo 2', cursive">R$ 1.650</div>
-          </div>
-          <div class="flex-1 border-l border-white/15 pl-3">
-            <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">Sobrou</div>
-            <div class="text-sm font-bold text-[#A8FFB3]" style="font-family: 'Baloo 2', cursive">63%</div>
-          </div>
+          <template v-if="isLoading">
+            <div v-for="i in 3" :key="i" class="flex-1" :class="i > 1 ? 'border-l border-white/15 pl-3' : ''">
+              <div class="w-10 h-2 rounded bg-white/20 animate-pulse mb-1.5" />
+              <div class="w-16 h-3.5 rounded bg-white/20 animate-pulse" />
+            </div>
+          </template>
+          <template v-else>
+            <div class="flex-1">
+              <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">Orçado</div>
+              <div class="text-sm font-bold text-white" style="font-family: 'Baloo 2', cursive">R$ {{ fmt(totalBudget) }}</div>
+            </div>
+            <div class="flex-1 border-l border-white/15 pl-3">
+              <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">Gasto</div>
+              <div class="text-sm font-bold text-[#FFB3A0]" style="font-family: 'Baloo 2', cursive">R$ {{ fmt(totalSpent) }}</div>
+            </div>
+            <div class="flex-1 border-l border-white/15 pl-3">
+              <div class="text-[9px] text-white/50 uppercase tracking-wider font-bold mb-0.5">%</div>
+              <div class="text-sm font-bold text-[#A8FFB3]" style="font-family: 'Baloo 2', cursive">
+                {{ totalBudget ? Math.round((totalSpent / totalBudget) * 100) : 0 }}%
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
       <!-- Gasto por categoria -->
-      <div class="rounded-2xl p-4 mb-3.5 border border-[#E5D9C3] bg-white">
+      <div v-if="categorySpending.length" class="rounded-2xl p-4 mb-3.5 border border-[#E5D9C3] bg-white">
         <div class="text-[13px] font-bold text-[#1A1008] mb-3.5" style="font-family: 'Baloo 2', cursive">
           Gasto por categoria
         </div>
-        <div v-for="cat in categorySpending" :key="cat.name" class="mb-3 last:mb-0">
+        <div v-for="row in categorySpending" :key="row.cat.id" class="mb-3 last:mb-0">
           <div class="flex justify-between items-center mb-1">
             <div class="flex items-center gap-1.5">
-              <span class="text-sm">{{ cat.icon }}</span>
-              <span class="text-xs font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">{{ cat.name }}</span>
+              <span class="text-sm">{{ row.cat.icon ?? '📦' }}</span>
+              <span class="text-xs font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">{{ row.cat.name }}</span>
             </div>
             <span
               class="text-xs font-bold"
               style="font-family: 'Baloo 2', cursive"
-              :class="cat.isWarning ? 'text-[#C0252A]' : (cat.pct >= 35 ? 'text-[#9A7000]' : 'text-[#1E8C45]')"
+              :class="row.isWarning ? 'text-[#C0252A]' : row.pct >= 35 ? 'text-[#9A7000]' : 'text-[#1E8C45]'"
             >
-              {{ cat.spent }}
+              R$ {{ fmt(row.spent) }}
             </span>
           </div>
           <div class="h-2 rounded-full overflow-hidden bg-[#E5D9C3]">
-            <div class="h-full rounded-full transition-all" :style="{ width: cat.pct + '%', background: cat.barColor }" />
+            <div class="h-full rounded-full transition-all" :style="{ width: row.pct + '%', background: row.barColor }" />
           </div>
           <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
-            {{ cat.spent }} de {{ cat.budget }} · {{ cat.pct }}% usado {{ cat.isWarning ? '⚠️' : '' }}
+            R$ {{ fmt(row.spent) }} de R$ {{ fmt(parseFloat(row.cat.initial_amount)) }} · {{ row.pct }}% usado {{ row.isWarning ? '⚠️' : '' }}
           </div>
         </div>
       </div>
@@ -137,29 +203,46 @@ const entriesByDay = [
       <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
         Lançamentos · {{ monthLabel }}
       </div>
-      <div class="flex flex-col gap-2">
+
+      <!-- Loading -->
+      <div v-if="isLoading" class="flex flex-col gap-2">
+        <div v-for="i in 4" :key="i" class="rounded-[13px] p-3 border border-[#E5D9C3] bg-white h-[56px] animate-pulse" />
+      </div>
+
+      <!-- Empty -->
+      <div
+        v-else-if="!filteredTxns.length"
+        class="rounded-2xl p-5 border border-[#E5D9C3] bg-white text-center"
+      >
+        <p class="text-sm text-[#7A6E5F]">Nenhum lançamento em {{ monthLabel }}.</p>
+      </div>
+
+      <div v-else class="flex flex-col gap-2">
         <template v-for="group in entriesByDay" :key="group.day">
           <div class="text-[10px] font-bold text-[#7A6E5F] uppercase tracking-wider py-0.5 pt-2 first:pt-0">
             {{ group.day }}
           </div>
           <div
-            v-for="(item, j) in group.items"
-            :key="`${group.day}-${j}`"
+            v-for="txn in group.items"
+            :key="txn.id"
             class="rounded-[13px] p-3 border border-[#E5D9C3] bg-white flex items-center justify-between"
           >
             <div class="flex items-center gap-2.5">
               <div
-                class="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[15px] shrink-0"
-                :style="{ background: item.iconBg }"
+                class="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[15px] shrink-0 bg-[#FEF0E8]"
               >
-                {{ item.icon }}
+                {{ txn.category_id ? (catMap[txn.category_id]?.icon ?? '📦') : '💸' }}
               </div>
               <div>
-                <div class="text-[13px] font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">{{ item.title }}</div>
-                <div class="text-[10px] text-[#7A6E5F] font-semibold">{{ item.category }}</div>
+                <div class="text-[13px] font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">{{ txn.description }}</div>
+                <div class="text-[10px] text-[#7A6E5F] font-semibold">
+                  {{ txn.category_id ? (catMap[txn.category_id]?.name ?? 'Sem categoria') : 'Sem categoria' }}
+                </div>
               </div>
             </div>
-            <div class="text-sm font-extrabold text-[#C0252A]" style="font-family: 'Baloo 2', cursive">{{ item.value }}</div>
+            <div class="text-sm font-extrabold text-[#C0252A]" style="font-family: 'Baloo 2', cursive">
+              − R$ {{ fmt(parseFloat(txn.amount)) }}
+            </div>
           </div>
         </template>
       </div>

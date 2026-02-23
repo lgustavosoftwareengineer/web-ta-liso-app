@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRequestCodeApiAuthRequestCodePost } from '@/api/generated/auth/auth'
+import { useApiError } from '@/composables/useApiError'
+import AppSpinner from '@/components/AppSpinner.vue'
 
 const router = useRouter()
+const { getErrorMessage } = useApiError()
 const email = ref('')
+const errorMsg = ref('')
 
-function sendCode() {
-  router.push({ name: 'token', query: { email: email.value || undefined } })
+const requestCode = useRequestCodeApiAuthRequestCodePost()
+
+async function sendCode() {
+  if (!email.value.trim()) return
+  errorMsg.value = ''
+  try {
+    await requestCode.mutateAsync({ data: { email: email.value } })
+    router.push({ name: 'token', query: { email: email.value } })
+  } catch (e) {
+    errorMsg.value = getErrorMessage(e)
+  }
 }
 </script>
 
@@ -78,15 +92,21 @@ function sendCode() {
             type="email"
             placeholder="joao@email.com"
             class="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/40 bg-white/8 border border-white/20 outline-none focus:border-[#F5C518]"
+            @keydown.enter="sendCode"
           >
+          <p v-if="errorMsg" class="text-xs text-[#F5C518] font-semibold">{{ errorMsg }}</p>
         </div>
         <button
           type="button"
-          class="w-full py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-95 active:opacity-90"
+          class="w-full py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-95 active:opacity-90 disabled:opacity-50"
           style="font-family: 'Baloo 2', cursive; background: linear-gradient(90deg, #E8500A 0%, #F5C518 100%); box-shadow: 0 4px 20px rgba(232,80,10,0.35)"
+          :disabled="requestCode.isPending.value"
           @click="sendCode"
         >
-          Mandar o código 🚀
+          <span class="flex items-center justify-center gap-2">
+            <AppSpinner v-if="requestCode.isPending.value" size="sm" />
+            {{ requestCode.isPending.value ? 'Enviando...' : 'Mandar o código 🚀' }}
+          </span>
         </button>
       </div>
     </div>
@@ -136,15 +156,22 @@ function sendCode() {
             v-model="email"
             type="email"
             placeholder="voce@email.com"
-            class="w-full rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/40 bg-white/10 border border-white/20 outline-none mb-4 focus:border-[#F5C518]"
+            class="w-full rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/40 bg-white/10 border border-white/20 outline-none mb-1 focus:border-[#F5C518]"
+            @keydown.enter="sendCode"
           >
+          <p v-if="errorMsg" class="text-xs text-[#F5C518] font-semibold mb-3">{{ errorMsg }}</p>
+          <div v-else class="mb-4" />
           <button
             type="button"
-            class="w-full py-4 rounded-xl text-[15px] font-bold text-white border-0 cursor-pointer transition-opacity hover:opacity-95"
+            class="w-full py-4 rounded-xl text-[15px] font-bold text-white border-0 cursor-pointer transition-opacity hover:opacity-95 disabled:opacity-50"
             style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A, #F5C518); box-shadow: 0 6px 20px rgba(232,80,10,0.4)"
+            :disabled="requestCode.isPending.value"
             @click="sendCode"
           >
-            Mandar o código 🚀
+            <span class="flex items-center justify-center gap-2">
+              <AppSpinner v-if="requestCode.isPending.value" size="sm" />
+              {{ requestCode.isPending.value ? 'Enviando...' : 'Mandar o código 🚀' }}
+            </span>
           </button>
         </div>
       </div>

@@ -1,12 +1,100 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import BottomNav from '@/components/BottomNav.vue'
+import {
+  useGetSettingsApiSettingsGet,
+  useUpdateSettingsApiSettingsPatch,
+  getGetSettingsApiSettingsGetQueryKey,
+} from '@/api/generated/settings/settings'
+import {
+  useGetProfileApiUsersMeGet,
+  useUpdateProfileApiUsersMePatch,
+  getGetProfileApiUsersMeGetQueryKey,
+} from '@/api/generated/users/users'
+import { useAuth } from '@/composables/useAuth'
 
-const userName = ref('João Alves')
-const notificationsOn = ref(true)
-const resetMensalOn = ref(true)
-const alertarSaldoOn = ref(true)
-const bloquearNegativoOn = ref(false)
+const queryClient = useQueryClient()
+const { logout } = useAuth()
+
+// ──────────────────────────────────────────────
+// Profile
+// ──────────────────────────────────────────────
+const { data: profile, isLoading: profileLoading } = useGetProfileApiUsersMeGet()
+
+const userName = ref('')
+const nameError = ref('')
+
+watch(profile, (p) => {
+  if (p && !userName.value) userName.value = p.name
+}, { immediate: true })
+
+const updateProfile = useUpdateProfileApiUsersMePatch({
+  mutation: {
+    onSuccess: (response) => {
+      queryClient.setQueryData(getGetProfileApiUsersMeGetQueryKey(), response)
+      nameError.value = ''
+    },
+    onError: () => {
+      nameError.value = 'O nome não pode ser vazio.'
+    },
+  },
+})
+
+function saveProfile() {
+  const name = userName.value.trim()
+  if (!name) {
+    nameError.value = 'O nome não pode ser vazio.'
+    return
+  }
+  updateProfile.mutate({ data: { name } })
+}
+
+const userEmail = computed(() => profile.value?.email ?? '')
+const userInitials = computed(() => {
+  const name = profile.value?.name ?? userEmail.value
+  if (!name) return 'EU'
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+})
+
+// ──────────────────────────────────────────────
+// Settings
+// ──────────────────────────────────────────────
+const { data: settings, isLoading: settingsLoading } = useGetSettingsApiSettingsGet()
+
+const alertLowBalance = ref(false)
+const monthlyReset = ref(true)
+const blockNegativeBalance = ref(false)
+
+// Sync local state when data loads
+watch(settings, (s) => {
+  if (!s) return
+  alertLowBalance.value = s.alert_low_balance
+  monthlyReset.value = s.monthly_reset
+  blockNegativeBalance.value = s.block_negative_balance
+}, { immediate: true })
+
+const updateSettings = useUpdateSettingsApiSettingsPatch({
+  mutation: {
+    onSuccess: (response) => {
+      queryClient.setQueryData(getGetSettingsApiSettingsGetQueryKey(), response)
+    },
+  },
+})
+
+function toggle(field: 'alert_low_balance' | 'monthly_reset' | 'block_negative_balance') {
+  const next = !{
+    alert_low_balance: alertLowBalance.value,
+    monthly_reset: monthlyReset.value,
+    block_negative_balance: blockNegativeBalance.value,
+  }[field]
+
+  if (field === 'alert_low_balance') alertLowBalance.value = next
+  if (field === 'monthly_reset') monthlyReset.value = next
+  if (field === 'block_negative_balance') blockNegativeBalance.value = next
+
+  updateSettings.mutate({ data: { [field]: next } })
+}
 </script>
 
 <template>
@@ -14,10 +102,10 @@ const bloquearNegativoOn = ref(false)
     <header class="flex items-center justify-between px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3] bg-white">
       <span class="text-xl font-extrabold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">⚙️ Configurações</span>
       <div
-        class="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+        class="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
         style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A 0%, #F5C518 100%)"
       >
-        JA
+        {{ userInitials }}
       </div>
     </header>
 
@@ -29,78 +117,84 @@ const bloquearNegativoOn = ref(false)
       >
         <span class="absolute text-[80px] -top-2 -right-2 opacity-10">💸</span>
         <div
-          class="w-[54px] h-[54px] rounded-full flex items-center justify-center text-white text-[22px] font-extrabold shrink-0 border-2 border-white/30"
+          class="w-13.5 h-13.5 rounded-full flex items-center justify-center text-white text-[22px] font-extrabold shrink-0 border-2 border-white/30"
           style="font-family: 'Baloo 2', cursive; background: rgba(255,255,255,0.2)"
         >
-          JA
+          <span v-if="profileLoading" class="w-6 h-6 rounded-full bg-white/30 animate-pulse" />
+          <template v-else>{{ userInitials }}</template>
         </div>
-        <div>
-          <div class="text-lg font-extrabold text-white" style="font-family: 'Baloo 2', cursive">João Alves</div>
-          <div class="text-xs text-white/60 font-semibold">joao@email.com</div>
+        <div class="flex-1 min-w-0">
+          <div v-if="profileLoading" class="w-32 h-3 rounded bg-white/30 animate-pulse mb-1" />
+          <div v-else class="text-sm font-bold text-white truncate" style="font-family: 'Baloo 2', cursive">
+            {{ profile?.name || '—' }}
+          </div>
+          <div v-if="profileLoading" class="w-44 h-2.5 rounded bg-white/30 animate-pulse mt-1" />
+          <div v-else class="text-xs text-white/60 font-semibold truncate">{{ userEmail }}</div>
         </div>
       </div>
 
-      <!-- Perfil -->
+      <!-- Perfil edit -->
       <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
         Perfil
       </div>
-      <div class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
-        <div class="p-3.5 border-b border-[#E5D9C3]">
-          <label class="text-[10px] font-bold text-[#7A6E5F] uppercase tracking-wider block mb-1.5">Seu nome</label>
+      <div class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4 p-4 flex flex-col gap-3">
+        <!-- Nome -->
+        <div>
+          <label class="text-[11px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-1 block">Seu nome</label>
           <input
             v-model="userName"
             type="text"
-            class="w-full border border-[#E5D9C3] rounded-[10px] py-2 px-3 text-[13px] text-[#1A1008] bg-[#F5EDD8] outline-none"
+            placeholder="Ex: João Silva"
+            class="w-full rounded-[10px] py-2 px-3 text-sm text-[#1A1008] bg-[#F5EDD8] border outline-none"
+            :class="nameError ? 'border-[#C0252A]' : 'border-[#E5D9C3]'"
+            :disabled="profileLoading"
           />
+          <p v-if="nameError" class="text-[11px] text-[#C0252A] mt-1">{{ nameError }}</p>
         </div>
-        <div class="p-3.5 border-b border-[#E5D9C3]">
-          <label class="text-[10px] font-bold text-[#7A6E5F] uppercase tracking-wider block mb-1.5">E-mail</label>
-          <div class="text-[13px] text-[#7A6E5F] bg-[#F5EDD8] border border-[#E5D9C3] rounded-[10px] py-2 px-3">joao@email.com</div>
-          <div class="text-[10px] text-[#7A6E5F] mt-1">O e-mail não pode ser alterado</div>
+        <!-- E-mail (somente leitura) -->
+        <div>
+          <label class="text-[11px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-1 block">E-mail</label>
+          <input
+            :value="userEmail"
+            type="email"
+            disabled
+            class="w-full rounded-[10px] py-2 px-3 text-sm text-[#7A6E5F] bg-[#E5D9C3]/40 border border-[#E5D9C3] outline-none cursor-not-allowed"
+          />
+          <p class="text-[11px] text-[#7A6E5F] mt-1">O e-mail não pode ser alterado.</p>
         </div>
-        <div class="p-3.5">
-          <button
-            type="button"
-            class="w-full py-2.5 rounded-[10px] border-0 text-white text-[13px] font-bold cursor-pointer"
-            style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A, #F5C518)"
-          >
-            Salvar alterações 💾
-          </button>
-        </div>
-      </div>
-
-      <!-- Conta -->
-      <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
-        Conta
-      </div>
-      <div class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
-        <div class="flex items-center justify-between p-3.5 cursor-pointer">
-          <div class="flex items-center gap-2.5">
-            <span class="text-lg">🔔</span>
-            <div>
-              <div class="text-[13px] font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">Notificações</div>
-              <div class="text-[11px] text-[#7A6E5F]">Alertas de saldo baixo</div>
-            </div>
-          </div>
-          <button
-            type="button"
-            class="w-[42px] h-6 rounded-xl relative cursor-pointer border-0 transition-colors"
-            :class="notificationsOn ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
-            @click="notificationsOn = !notificationsOn"
-          >
-            <span
-              class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="notificationsOn ? 'right-0.5' : 'left-0.5'"
-            />
-          </button>
-        </div>
+        <!-- Salvar -->
+        <button
+          type="button"
+          class="w-full py-2.5 rounded-xl text-[13px] font-bold text-white cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+          style="background: linear-gradient(135deg, #E8500A 0%, #C03A00 100%)"
+          :disabled="profileLoading || updateProfile.isPending.value"
+          @click="saveProfile"
+        >
+          {{ updateProfile.isPending.value ? 'Salvando...' : 'Salvar alterações 💾' }}
+        </button>
       </div>
 
       <!-- Orçamento -->
       <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
         Orçamento
       </div>
-      <div class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
+
+      <!-- Settings skeleton -->
+      <div v-if="settingsLoading" class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
+        <div v-for="i in 3" :key="i" class="flex items-center justify-between p-3.5 border-b last:border-b-0 border-[#E5D9C3]">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-[#E5D9C3] animate-pulse" />
+            <div class="space-y-1.5">
+              <div class="w-28 h-3 rounded bg-[#E5D9C3] animate-pulse" />
+              <div class="w-40 h-2.5 rounded bg-[#E5D9C3] animate-pulse" />
+            </div>
+          </div>
+          <div class="w-10.5 h-6 rounded-xl bg-[#E5D9C3] animate-pulse shrink-0" />
+        </div>
+      </div>
+
+      <div v-else class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
+        <!-- Reset mensal -->
         <div class="flex items-center justify-between p-3.5 border-b border-[#E5D9C3] cursor-pointer">
           <div class="flex items-center gap-2.5">
             <span class="text-lg">🔄</span>
@@ -111,16 +205,19 @@ const bloquearNegativoOn = ref(false)
           </div>
           <button
             type="button"
-            class="w-[42px] h-6 rounded-xl relative cursor-pointer border-0 transition-colors"
-            :class="resetMensalOn ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
-            @click="resetMensalOn = !resetMensalOn"
+            class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
+            :class="monthlyReset ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :disabled="settingsLoading || updateSettings.isPending.value"
+            @click="toggle('monthly_reset')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="resetMensalOn ? 'right-0.5' : 'left-0.5'"
+              :class="monthlyReset ? 'right-0.5' : 'left-0.5'"
             />
           </button>
         </div>
+
+        <!-- Alertar saldo baixo -->
         <div class="flex items-center justify-between p-3.5 border-b border-[#E5D9C3] cursor-pointer">
           <div class="flex items-center gap-2.5">
             <span class="text-lg">⚠️</span>
@@ -131,16 +228,19 @@ const bloquearNegativoOn = ref(false)
           </div>
           <button
             type="button"
-            class="w-[42px] h-6 rounded-xl relative cursor-pointer border-0 transition-colors"
-            :class="alertarSaldoOn ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
-            @click="alertarSaldoOn = !alertarSaldoOn"
+            class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
+            :class="alertLowBalance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :disabled="settingsLoading || updateSettings.isPending.value"
+            @click="toggle('alert_low_balance')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="alertarSaldoOn ? 'right-0.5' : 'left-0.5'"
+              :class="alertLowBalance ? 'right-0.5' : 'left-0.5'"
             />
           </button>
         </div>
+
+        <!-- Bloquear saldo negativo -->
         <div class="flex items-center justify-between p-3.5 cursor-pointer">
           <div class="flex items-center gap-2.5">
             <span class="text-lg">🚫</span>
@@ -151,42 +251,16 @@ const bloquearNegativoOn = ref(false)
           </div>
           <button
             type="button"
-            class="w-[42px] h-6 rounded-xl relative cursor-pointer border-0 transition-colors"
-            :class="bloquearNegativoOn ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
-            @click="bloquearNegativoOn = !bloquearNegativoOn"
+            class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
+            :class="blockNegativeBalance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :disabled="settingsLoading || updateSettings.isPending.value"
+            @click="toggle('block_negative_balance')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="bloquearNegativoOn ? 'right-0.5' : 'left-0.5'"
+              :class="blockNegativeBalance ? 'right-0.5' : 'left-0.5'"
             />
           </button>
-        </div>
-      </div>
-
-      <!-- Dados -->
-      <div class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5" style="font-family: 'Baloo 2', cursive">
-        Dados
-      </div>
-      <div class="rounded-2xl border border-[#E5D9C3] bg-white overflow-hidden mb-4">
-        <div class="flex items-center justify-between p-3.5 border-b border-[#E5D9C3] cursor-pointer">
-          <div class="flex items-center gap-2.5">
-            <span class="text-lg">📋</span>
-            <div>
-              <div class="text-[13px] font-bold text-[#1A1008]" style="font-family: 'Baloo 2', cursive">Exportar histórico</div>
-              <div class="text-[11px] text-[#7A6E5F]">Baixar CSV dos lançamentos</div>
-            </div>
-          </div>
-          <span class="text-[#7A6E5F] text-base">›</span>
-        </div>
-        <div class="flex items-center justify-between p-3.5 cursor-pointer">
-          <div class="flex items-center gap-2.5">
-            <span class="text-lg">🗑️</span>
-            <div>
-              <div class="text-[13px] font-bold text-[#C0252A]" style="font-family: 'Baloo 2', cursive">Limpar todos os dados</div>
-              <div class="text-[11px] text-[#7A6E5F]">Remove categorias e lançamentos</div>
-            </div>
-          </div>
-          <span class="text-[#7A6E5F] text-base">›</span>
         </div>
       </div>
 
@@ -195,6 +269,7 @@ const bloquearNegativoOn = ref(false)
         type="button"
         class="w-full py-3.5 rounded-[14px] border border-[#C0252A]/30 bg-[#FAEAEA] text-[14px] font-bold text-[#C0252A] cursor-pointer mb-2"
         style="font-family: 'Baloo 2', cursive"
+        @click="logout"
       >
         Sair da conta 👋
       </button>

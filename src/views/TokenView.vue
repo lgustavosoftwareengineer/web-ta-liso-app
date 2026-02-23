@@ -2,15 +2,36 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TokenCodeInput from '@/components/TokenCodeInput.vue'
+import { useVerifyCodeApiAuthVerifyCodePost } from '@/api/generated/auth/auth'
+import { useApiError } from '@/composables/useApiError'
+import AppSpinner from '@/components/AppSpinner.vue'
 
 const router = useRouter()
 const route = useRoute()
+const { getErrorMessage } = useApiError()
 
-const email = (route.query.email as string) || 'joao@email.com'
+const email = (route.query.email as string) || ''
 const code = ref('')
+const errorMsg = ref('')
 
-function submit() {
-  router.push({ name: 'home' })
+const verifyCode = useVerifyCodeApiAuthVerifyCodePost({
+  mutation: {
+    onSuccess: (data) => {
+      localStorage.setItem('access_token', data.access_token)
+      router.push({ name: 'home' })
+    },
+  },
+})
+
+async function submit() {
+  if (code.value.length < 6) return
+  errorMsg.value = ''
+  try {
+    await verifyCode.mutateAsync({ data: { email, code: code.value } })
+  } catch (e) {
+    errorMsg.value = getErrorMessage(e)
+    code.value = ''
+  }
 }
 </script>
 
@@ -84,13 +105,18 @@ function submit() {
           </div>
         </div>
         <TokenCodeInput v-model="code" />
+        <p v-if="errorMsg" class="text-xs text-[#F5C518] font-semibold -mt-1">{{ errorMsg }}</p>
         <button
           type="button"
-          class="w-full py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-95 active:opacity-90"
+          class="w-full py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-95 active:opacity-90 disabled:opacity-50"
           style="font-family: 'Baloo 2', cursive; background: linear-gradient(90deg, #E8500A 0%, #F5C518 100%); box-shadow: 0 4px 20px rgba(232,80,10,0.35)"
+          :disabled="verifyCode.isPending.value"
           @click="submit"
         >
-          Entrar de vez! 🎉
+          <span class="flex items-center justify-center gap-2">
+              <AppSpinner v-if="verifyCode.isPending.value" size="sm" />
+              {{ verifyCode.isPending.value ? 'Verificando...' : 'Entrar de vez! 🎉' }}
+            </span>
         </button>
       </div>
     </div>
@@ -119,13 +145,18 @@ function submit() {
           </div>
         </div>
         <TokenCodeInput v-model="code" />
+        <p v-if="errorMsg" class="text-xs text-[#F5C518] font-semibold mt-1">{{ errorMsg }}</p>
         <button
           type="button"
-          class="w-full py-4 rounded-xl text-[15px] font-bold text-white border-0 cursor-pointer mt-4 transition-opacity hover:opacity-95"
+          class="w-full py-4 rounded-xl text-[15px] font-bold text-white border-0 cursor-pointer mt-4 transition-opacity hover:opacity-95 disabled:opacity-50"
           style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A, #F5C518); box-shadow: 0 6px 20px rgba(232,80,10,0.4)"
+          :disabled="verifyCode.isPending.value"
           @click="submit"
         >
-          Entrar de vez! 🎉
+          <span class="flex items-center justify-center gap-2">
+              <AppSpinner v-if="verifyCode.isPending.value" size="sm" />
+              {{ verifyCode.isPending.value ? 'Verificando...' : 'Entrar de vez! 🎉' }}
+            </span>
         </button>
       </div>
     </div>

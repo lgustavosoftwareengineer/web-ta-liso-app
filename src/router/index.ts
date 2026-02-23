@@ -8,6 +8,8 @@ import ChatView from '@/views/ChatView.vue'
 import ResumoView from '@/views/ResumoView.vue'
 import ConfiguracoesView from '@/views/ConfiguracoesView.vue'
 
+const AUTH_ROUTES = ['login', 'token']
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior() {
@@ -22,6 +24,15 @@ const router = createRouter({
     { path: '/resumo', name: 'resumo', component: ResumoView, meta: { topbar: { subtitle: 'Visão geral do mês' } } },
     { path: '/configuracoes', name: 'configuracoes', component: ConfiguracoesView, meta: { topbar: { subtitle: 'Perfil e preferências' } } },
   ],
+})
+
+router.beforeEach((to) => {
+  const isAuthenticated = !!localStorage.getItem('access_token')
+  const isAuthRoute = AUTH_ROUTES.includes(to.name as string)
+
+  if (!isAuthenticated && !isAuthRoute) {
+    return { name: 'login' }
+  }
 })
 
 router.afterEach(() => {
