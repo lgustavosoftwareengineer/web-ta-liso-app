@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import BottomNav from '@/components/BottomNav.vue'
 import {
-  useGetSettingsApiSettingsGet,
   useUpdateSettingsApiSettingsPatch,
   getGetSettingsApiSettingsGetQueryKey,
 } from '@/api/generated/settings/settings'
@@ -14,19 +13,15 @@ import {
 } from '@/api/generated/users/users'
 import { useAuth } from '@/composables/useAuth'
 import { useUser } from '@/composables/useUser'
+import { useSettings } from '@/composables/useSettings'
 
 const queryClient = useQueryClient()
 const { logout } = useAuth()
 
-// ──────────────────────────────────────────────
-// Profile
-// ──────────────────────────────────────────────
 const { isLoading: profileLoading } = useGetProfileApiUsersMeGet()
 const { name, email, initials } = useUser()
-
-const formName = ref(name.value)
-
 const nameError = ref('')
+const formName = ref(name.value)
 
 const updateProfile = useUpdateProfileApiUsersMePatch({
   mutation: {
@@ -40,6 +35,39 @@ const updateProfile = useUpdateProfileApiUsersMePatch({
   },
 })
 
+const updateSettings = useUpdateSettingsApiSettingsPatch({
+  mutation: {
+    onSuccess: (response) => {
+      queryClient.setQueryData(getGetSettingsApiSettingsGetQueryKey(), response)
+    },
+  },
+})
+
+const {
+  isLoading: settingsLoading,
+  alertLowBalance,
+  monthlyReset,
+  blockNegativeBalance,
+} = useSettings()
+
+const settingsForm = ref({
+  alert_low_balance: false,
+  monthly_reset: false,
+  block_negative_balance: false,
+})
+
+watch(
+  [alertLowBalance, monthlyReset, blockNegativeBalance],
+  () => {
+    settingsForm.value = {
+      alert_low_balance: alertLowBalance.value,
+      monthly_reset: monthlyReset.value,
+      block_negative_balance: blockNegativeBalance.value,
+    }
+  },
+  { immediate: true },
+)
+
 function saveProfile() {
   if (!formName.value) {
     nameError.value = 'O nome não pode ser vazio.'
@@ -49,47 +77,15 @@ function saveProfile() {
   updateProfile.mutate({ data: { name: formName.value } })
 }
 
-// ──────────────────────────────────────────────
-// Settings
-// ──────────────────────────────────────────────
-const { data: settings, isLoading: settingsLoading } = useGetSettingsApiSettingsGet()
-
-const alertLowBalance = ref(false)
-const monthlyReset = ref(true)
-const blockNegativeBalance = ref(false)
-
-// Sync local state when data loads
-watch(
-  settings,
-  (s) => {
-    if (!s) return
-    alertLowBalance.value = s.alert_low_balance
-    monthlyReset.value = s.monthly_reset
-    blockNegativeBalance.value = s.block_negative_balance
-  },
-  { immediate: true },
-)
-
-const updateSettings = useUpdateSettingsApiSettingsPatch({
-  mutation: {
-    onSuccess: (response) => {
-      queryClient.setQueryData(getGetSettingsApiSettingsGetQueryKey(), response)
-    },
-  },
-})
-
 function toggle(field: 'alert_low_balance' | 'monthly_reset' | 'block_negative_balance') {
-  const next = !{
-    alert_low_balance: alertLowBalance.value,
-    monthly_reset: monthlyReset.value,
-    block_negative_balance: blockNegativeBalance.value,
-  }[field]
+  if (field === 'alert_low_balance')
+    settingsForm.value.alert_low_balance = !settingsForm.value.alert_low_balance
+  if (field === 'monthly_reset')
+    settingsForm.value.monthly_reset = !settingsForm.value.monthly_reset
+  if (field === 'block_negative_balance')
+    settingsForm.value.block_negative_balance = !settingsForm.value.block_negative_balance
 
-  if (field === 'alert_low_balance') alertLowBalance.value = next
-  if (field === 'monthly_reset') monthlyReset.value = next
-  if (field === 'block_negative_balance') blockNegativeBalance.value = next
-
-  updateSettings.mutate({ data: { [field]: next } })
+  updateSettings.mutate({ data: { [field]: settingsForm.value[field] } })
 }
 </script>
 
@@ -242,13 +238,13 @@ function toggle(field: 'alert_low_balance' | 'monthly_reset' | 'block_negative_b
           <button
             type="button"
             class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
-            :class="monthlyReset ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :class="settingsForm.monthly_reset ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
             :disabled="settingsLoading || updateSettings.isPending.value"
             @click="toggle('monthly_reset')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="monthlyReset ? 'right-0.5' : 'left-0.5'"
+              :class="settingsForm.monthly_reset ? 'right-0.5' : 'left-0.5'"
             />
           </button>
         </div>
@@ -272,13 +268,13 @@ function toggle(field: 'alert_low_balance' | 'monthly_reset' | 'block_negative_b
           <button
             type="button"
             class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
-            :class="alertLowBalance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :class="settingsForm.alert_low_balance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
             :disabled="settingsLoading || updateSettings.isPending.value"
             @click="toggle('alert_low_balance')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="alertLowBalance ? 'right-0.5' : 'left-0.5'"
+              :class="settingsForm.alert_low_balance ? 'right-0.5' : 'left-0.5'"
             />
           </button>
         </div>
@@ -300,13 +296,13 @@ function toggle(field: 'alert_low_balance' | 'monthly_reset' | 'block_negative_b
           <button
             type="button"
             class="w-10.5 h-6 rounded-xl relative cursor-pointer border-0 transition-colors disabled:opacity-50"
-            :class="blockNegativeBalance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
+            :class="settingsForm.block_negative_balance ? 'bg-[#1E8C45]' : 'bg-[#E5D9C3]'"
             :disabled="settingsLoading || updateSettings.isPending.value"
             @click="toggle('block_negative_balance')"
           >
             <span
               class="absolute w-5 h-5 bg-white rounded-full top-0.5 shadow-sm transition-all"
-              :class="blockNegativeBalance ? 'right-0.5' : 'left-0.5'"
+              :class="settingsForm.block_negative_balance ? 'right-0.5' : 'left-0.5'"
             />
           </button>
         </div>
