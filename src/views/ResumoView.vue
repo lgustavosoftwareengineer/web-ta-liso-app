@@ -57,9 +57,12 @@ const catMap = computed(() => {
 })
 
 // Summary numbers
-const totalBudget = computed(() =>
-  (categories.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0),
-)
+const totalBudget = computed(() => {
+  if (totalSpent.value) {
+    return (categories.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0)
+  }
+  return 0
+})
 const totalSpent = computed(() => filteredTxns.value.reduce((s, t) => s + parseFloat(t.amount), 0))
 const totalRemaining = computed(() => {
   if (totalSpent.value) {
