@@ -1,0 +1,4 @@
+# Copie para terraform.tfvars e ajuste o domínio.
+# Ex.: app.ta-liso-app.online ou www.ta-liso-app.online
+
+domain_name = "app.ta-liso-app.online"

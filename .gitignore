@@ -48,4 +48,11 @@ mockup/*
 # Generated API hooks (regenerate with npm run gen:api)
 src/api/generated/
 
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars
+
 .claude
