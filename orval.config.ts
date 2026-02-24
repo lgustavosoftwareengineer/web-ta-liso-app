@@ -1,6 +1,9 @@
+import { existsSync } from 'node:fs'
 import { defineConfig } from 'orval'
 
-process.loadEnvFile('.env')
+if (existsSync('.env')) {
+  process.loadEnvFile('.env')
+}
 const apiUrl = process.env.VITE_API_URL ?? 'https://ta-liso-app.online'
 
 export default defineConfig({
