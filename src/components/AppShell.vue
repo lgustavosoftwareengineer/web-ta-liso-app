@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { RouterView } from 'vue-router'
 import DesktopSidebar from '@/components/DesktopSidebar.vue'
 import DesktopTopbar from '@/components/DesktopTopbar.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 const route = useRoute()
 
@@ -29,5 +30,6 @@ const isAuthRoute = computed(() => {
         <RouterView />
       </div>
     </div>
+    <ToastContainer />
   </div>
 </template>

@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import BottomNav from '@/components/BottomNav.vue'
 import { useListCategoriesApiCategoriesGet } from '@/api/generated/categories/categories'
+import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
 import type { CategoryResponse } from '@/api/generated/táLisoAPI.schemas'
 import { useUser } from '@/composables/useUser'
 
 const { data: categories, isLoading } = useListCategoriesApiCategoriesGet()
+const { data: settings } = useGetSettingsApiSettingsGet()
 
 const { initials } = useUser()
 
@@ -37,7 +39,10 @@ const totalBudget = computed(() =>
 const totalSpent = computed(() => (categories.value ?? []).reduce((s, c) => s + spent(c), 0))
 const totalRemaining = computed(() => totalBudget.value - totalSpent.value)
 
-const alerts = computed(() => (categories.value ?? []).filter((c) => pct(c) >= 90))
+const alerts = computed(() => {
+  if (!settings.value?.alert_low_balance) return []
+  return (categories.value ?? []).filter((c) => pct(c) >= 90)
+})
 
 const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 </script>

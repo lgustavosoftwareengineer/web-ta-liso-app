@@ -9,16 +9,20 @@ import {
   useGetHistoryApiChatGet,
   getGetHistoryApiChatGetQueryKey,
 } from '@/api/generated/chat/chat'
+import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
 import type { CategoryResponse, TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
 import { useGreeting } from '@/composables/useGreeting'
+import { useToastStore } from '@/stores/toast'
 
 const queryClient = useQueryClient()
+const toastStore = useToastStore()
 
 // ──────────────────────────────────────────────
 // Data
 // ──────────────────────────────────────────────
 const { data: categories } = useListCategoriesApiCategoriesGet()
 const { data: transactions } = useListTransactionsApiTransactionsGet()
+const { data: settings } = useGetSettingsApiSettingsGet()
 const { data: history, isLoading: historyLoading } = useGetHistoryApiChatGet()
 
 const inputText = ref('')
@@ -79,6 +83,17 @@ const chat = useChatApiChatPost({
           catIcon: cat?.icon ?? undefined,
           remainingBalance: remaining,
         })
+        if (settings.value?.alert_low_balance && cat && remaining !== undefined) {
+          const initial = parseFloat(cat.initial_amount)
+          const pct = initial > 0 ? Math.min(100, Math.round(((initial - remaining) / initial) * 100)) : 100
+          if (pct >= 90) {
+            const msg =
+              remaining < 0
+                ? `${cat.icon ?? '📦'} ${cat.name} passou do limite! Saldo: R$ ${remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+                : `${cat.icon ?? '📦'} ${cat.name} tá quase no limite! Só sobrou R$ ${remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, cabra!`
+            toastStore.show(msg, 'warning')
+          }
+        }
         queryClient.invalidateQueries({ queryKey: getListTransactionsApiTransactionsGetQueryKey() })
         queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
       } else {
