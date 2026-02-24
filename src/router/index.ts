@@ -37,7 +37,7 @@ const router = createRouter({
       meta: {
         topbar: {
           title: '💬 Chat financeiro',
-          subtitle: 'Digite seus gastos em linguagem natural',
+          subtitle: 'Digite teus gastos do jeito que cê fala, visse',
         },
       },
     },

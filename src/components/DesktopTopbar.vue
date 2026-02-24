@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useFormattedDate } from '@/composables/useFormattedDate'
+import { useGreeting } from '@/composables/useGreeting'
 import { useUser } from '@/composables/useUser'
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
@@ -8,13 +9,7 @@ const route = useRoute()
 
 const { name } = useUser()
 const { formatCurrentDate } = useFormattedDate()
-
-function getGreetingWithEmoji(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia ☀️'
-  if (h < 18) return 'Boa tarde 🌤️'
-  return 'Boa noite 🌙'
-}
+const { getGreetingWithEmoji } = useGreeting()
 
 const title = computed(() => {
   const meta = route.meta?.topbar as { title?: string; subtitle?: string } | undefined

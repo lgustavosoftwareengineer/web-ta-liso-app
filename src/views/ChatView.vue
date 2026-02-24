@@ -10,6 +10,7 @@ import {
   getGetHistoryApiChatGetQueryKey,
 } from '@/api/generated/chat/chat'
 import type { CategoryResponse, TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
+import { useGreeting } from '@/composables/useGreeting'
 
 const queryClient = useQueryClient()
 
@@ -29,6 +30,7 @@ type ChatMsg =
 
 const messages = ref<ChatMsg[]>([])
 const historyInitialized = ref(false)
+const { getGreetingWithEmoji } = useGreeting()
 
 // Populate messages from history once — wait for transactions + categories so we can
 // render the full transaction card (same style as real-time messages)
@@ -188,8 +190,9 @@ function balanceColor(p: number): string {
             <div v-if="messages.length === 0" class="max-w-[82%] lg:max-w-[65%] self-start">
               <div
                 class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
-                v-html="'Eita, bão dia! 🌞<br>Manda seus gastos em linguagem natural:<br><br>Ex: <em>gastei 200 no mercado</em> ou <em>Uber 45 transporte</em>'"
-              />
+              >
+                Eita, {{ getGreetingWithEmoji() }}!<br />Manda aí teus gastos do jeito que cê fala, visse:<br /><br />Ex: <em>gastei 200 no mercado</em> ou <em>Uber 45 transporte</em>
+              </div>
               <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ now() }}</div>
             </div>
 
