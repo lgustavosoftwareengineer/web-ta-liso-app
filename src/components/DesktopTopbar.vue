@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useFormattedDate } from '@/composables/useFormattedDate'
+import { formatCurrentDate } from '@/utils/dateHelpers'
 import { useGreeting } from '@/composables/useGreeting'
 import { useUser } from '@/composables/useUser'
 import { computed } from 'vue'
@@ -8,7 +8,6 @@ import { useRoute, RouterLink } from 'vue-router'
 const route = useRoute()
 
 const { name } = useUser()
-const { formatCurrentDate } = useFormattedDate()
 const { getGreetingWithEmoji } = useGreeting()
 
 const title = computed(() => {

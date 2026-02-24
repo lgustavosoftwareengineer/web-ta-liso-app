@@ -10,7 +10,8 @@ import {
   getGetHistoryApiChatGetQueryKey,
 } from '@/api/generated/chat/chat'
 import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
-import type { CategoryResponse, TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
+import type { TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
+import { categoryPercentage, barColor } from '@/utils/categoryHelpers'
 import { useGreeting } from '@/composables/useGreeting'
 import { useToastStore } from '@/stores/toast'
 
@@ -143,17 +144,6 @@ async function scrollToBottom() {
   if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
 }
 
-function categoryPct(cat: CategoryResponse): number {
-  const initial = parseFloat(cat.initial_amount)
-  const balance = parseFloat(cat.current_balance)
-  if (!initial) return 0
-  return Math.min(100, Math.round(((initial - balance) / initial) * 100))
-}
-function barColor(p: number): string {
-  if (p >= 90) return '#C0252A'
-  if (p >= 70) return '#F5C518'
-  return '#1E8C45'
-}
 function balanceColor(p: number): string {
   if (p >= 90) return 'text-[#C0252A]'
   if (p >= 70) return 'text-[#9A7000]'
@@ -326,8 +316,8 @@ function balanceColor(p: number): string {
                   <div
                     class="h-full rounded-full transition-all"
                     :style="{
-                      width: categoryPct(cat) + '%',
-                      background: barColor(categoryPct(cat)),
+                      width: categoryPercentage(cat) + '%',
+                      background: barColor(categoryPercentage(cat)),
                     }"
                   />
                 </div>
@@ -336,7 +326,7 @@ function balanceColor(p: number): string {
             <div
               class="text-[13px] font-extrabold shrink-0"
               style="font-family: 'Baloo 2', cursive"
-              :class="balanceColor(categoryPct(cat))"
+              :class="balanceColor(categoryPercentage(cat))"
             >
               R$
               {{

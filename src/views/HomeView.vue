@@ -4,44 +4,25 @@ import { RouterLink } from 'vue-router'
 import BottomNav from '@/components/BottomNav.vue'
 import { useListCategoriesApiCategoriesGet } from '@/api/generated/categories/categories'
 import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
-import type { CategoryResponse } from '@/api/generated/táLisoAPI.schemas'
 import { useUser } from '@/composables/useUser'
+import { categoryPercentage, barColor, categorySpent, formatBRL } from '@/utils/categoryHelpers'
+
+const { initials } = useUser()
 
 const { data: categories, isLoading } = useListCategoriesApiCategoriesGet()
 const { data: settings } = useGetSettingsApiSettingsGet()
 
-const { initials } = useUser()
-
-function pct(cat: CategoryResponse): number {
-  const initial = parseFloat(cat.initial_amount)
-  const balance = parseFloat(cat.current_balance)
-  if (!initial) return 0
-  return Math.min(100, Math.round(((initial - balance) / initial) * 100))
-}
-
-function barColor(p: number): string {
-  if (p >= 90) return '#C0252A'
-  if (p >= 70) return '#F5C518'
-  return '#1E8C45'
-}
-
-function spent(cat: CategoryResponse): number {
-  return parseFloat(cat.initial_amount) - parseFloat(cat.current_balance)
-}
-
-function formatBRL(value: number): string {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 const totalBudget = computed(() =>
   (categories.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0),
 )
-const totalSpent = computed(() => (categories.value ?? []).reduce((s, c) => s + spent(c), 0))
+const totalSpent = computed(() =>
+  (categories.value ?? []).reduce((s, c) => s + categorySpent(c), 0),
+)
 const totalRemaining = computed(() => totalBudget.value - totalSpent.value)
 
-const alerts = computed(() => {
+const categoriesAlerts = computed(() => {
   if (!settings.value?.alert_low_balance) return []
-  return (categories.value ?? []).filter((c) => pct(c) >= 90)
+  return (categories.value ?? []).filter((c) => categoryPercentage(c) >= 90)
 })
 
 const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -145,15 +126,22 @@ const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year:
 
       <!-- Alerts: categorias ≥ 90% -->
       <div
-        v-for="alert in alerts"
-        :key="alert.id"
+        v-for="categoryAlert in categoriesAlerts"
+        :key="categoryAlert.id"
         class="rounded-[14px] p-3 px-3.5 flex items-center gap-2.5 mb-3 border"
         style="background: #faeaea; border-color: rgba(192, 37, 42, 0.2)"
       >
         <span class="text-xl">⚠️</span>
-        <p class="text-xs font-semibold text-[#C0252A] leading-snug">
-          {{ alert.icon }} {{ alert.name }} tá quase no limite! Só sobrou R$
-          {{ formatBRL(parseFloat(alert.current_balance)) }}, cabra!
+        <p
+          v-if="categoryPercentage(categoryAlert) === 100"
+          class="text-xs font-semibold text-[#C0252A] leading-snug"
+        >
+          {{ categoryAlert.icon }} Sobrou nada para o betinha 😢! Tá tudo gasto no
+          {{ categoryAlert.name }}!
+        </p>
+        <p v-else class="text-xs font-semibold text-[#C0252A] leading-snug">
+          {{ categoryAlert.icon }} {{ categoryAlert.name }} tá quase no limite! Só sobrou R$
+          {{ formatBRL(parseFloat(categoryAlert.current_balance)) }}, cabra!
         </p>
       </div>
 
@@ -192,8 +180,8 @@ const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year:
 
       <div v-else class="flex flex-col gap-2.5 mb-5">
         <div
-          v-for="cat in categories"
-          :key="cat.id"
+          v-for="category in categories"
+          :key="category.id"
           class="rounded-2xl p-3.5 border cursor-pointer transition-all hover:-translate-y-px hover:shadow-md bg-white"
           style="border-color: #e5d9c3"
         >
@@ -202,17 +190,17 @@ const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year:
               <div
                 class="w-9.5 h-9.5 rounded-[11px] flex items-center justify-center text-lg shrink-0 bg-[#FEF0E8]"
               >
-                {{ cat.icon ?? '📦' }}
+                {{ category.icon ?? '📦' }}
               </div>
               <div>
                 <div
                   class="text-sm font-bold text-[#1A1008]"
                   style="font-family: 'Baloo 2', cursive"
                 >
-                  {{ cat.name }}
+                  {{ category.name }}
                 </div>
                 <div class="text-[11px] text-[#7A6E5F] mt-0.5">
-                  R$ {{ formatBRL(spent(cat)) }} gasto
+                  R$ {{ formatBRL(categorySpent(category)) }} gasto
                 </div>
               </div>
             </div>
@@ -220,21 +208,27 @@ const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year:
               <div
                 class="text-[15px] font-bold"
                 :style="{
-                  color: pct(cat) >= 90 ? '#C0252A' : '#1A1008',
+                  color: categoryPercentage(category) >= 90 ? '#C0252A' : '#1A1008',
                   fontFamily: 'Baloo 2, cursive',
                 }"
               >
-                R$ {{ formatBRL(parseFloat(cat.current_balance)) }}
+                R$ {{ formatBRL(parseFloat(category.current_balance)) }}
               </div>
-              <div class="text-[11px]" :style="{ color: pct(cat) >= 90 ? '#C0252A' : '#7A6E5F' }">
-                {{ pct(cat) }}% usado
+              <div
+                class="text-[11px]"
+                :style="{ color: categoryPercentage(category) >= 90 ? '#C0252A' : '#7A6E5F' }"
+              >
+                {{ categoryPercentage(category) }}% usado
               </div>
             </div>
           </div>
           <div class="h-1.5 rounded-full overflow-hidden" style="background: #e5d9c3">
             <div
               class="h-full rounded-full transition-all"
-              :style="{ width: pct(cat) + '%', background: barColor(pct(cat)) }"
+              :style="{
+                width: categoryPercentage(category) + '%',
+                background: barColor(categoryPercentage(category)),
+              }"
             />
           </div>
         </div>

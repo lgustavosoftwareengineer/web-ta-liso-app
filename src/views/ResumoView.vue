@@ -1,117 +1,21 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
-import { useListCategoriesApiCategoriesGet } from '@/api/generated/categories/categories'
-import { useListTransactionsApiTransactionsGet } from '@/api/generated/transactions/transactions'
-import type { CategoryResponse, TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
+import { formatBRL } from '@/utils/categoryHelpers'
+import { useMonthlyResume } from '@/composables/useMonthlyResume'
 
-const { data: categories, isLoading: loadingCats } = useListCategoriesApiCategoriesGet()
-const { data: transactions, isLoading: loadingTxns } = useListTransactionsApiTransactionsGet()
-
-const isLoading = computed(() => loadingCats.value || loadingTxns.value)
-
-// Month navigation
-const currentDate = ref(new Date())
-
-const monthLabel = computed(() => {
-  const months = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
-  ]
-  return `${months[currentDate.value.getMonth()]} ${currentDate.value.getFullYear()}`
-})
-
-function prevMonth() {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1)
-}
-function nextMonth() {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1)
-}
-
-// Filter transactions by selected month
-const filteredTxns = computed(() => {
-  if (!transactions.value) return []
-  const y = currentDate.value.getFullYear()
-  const m = currentDate.value.getMonth()
-  return transactions.value.filter((t) => {
-    const d = new Date(t.created_at)
-    return d.getFullYear() === y && d.getMonth() === m
-  })
-})
-
-// Category map for quick lookups
-const catMap = computed(() => {
-  const map: Record<string, CategoryResponse> = {}
-  for (const c of categories.value ?? []) map[c.id] = c
-  return map
-})
-
-// Summary numbers
-const totalBudget = computed(() => {
-  if (totalSpent.value) {
-    return (categories.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0)
-  }
-  return 0
-})
-const totalSpent = computed(() => filteredTxns.value.reduce((s, t) => s + parseFloat(t.amount), 0))
-const totalRemaining = computed(() => {
-  if (totalSpent.value) {
-    return totalBudget.value - totalSpent.value
-  }
-  return 0
-})
-
-// Spending by category for selected month
-const categorySpending = computed(() => {
-  const map: Record<string, number> = {}
-  for (const t of filteredTxns.value) {
-    if (t.category_id) map[t.category_id] = (map[t.category_id] ?? 0) + parseFloat(t.amount)
-  }
-  return (categories.value ?? [])
-    .map((cat) => {
-      const spent = map[cat.id] ?? 0
-      const initial = parseFloat(cat.initial_amount)
-      const pct = initial ? Math.min(100, Math.round((spent / initial) * 100)) : 0
-      return {
-        cat,
-        spent,
-        pct,
-        barColor: pct >= 90 ? '#C0252A' : pct >= 70 ? '#F5C518' : '#1E8C45',
-        isWarning: pct >= 90,
-      }
-    })
-    .filter((r) => r.spent > 0)
-})
-
-// Transactions grouped by day
-const entriesByDay = computed(() => {
-  const groups: Record<string, TransactionResponse[]> = {}
-  for (const t of [...filteredTxns.value].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  )) {
-    const dayKey = new Date(t.created_at).toLocaleDateString('pt-BR', {
-      day: 'numeric',
-      month: 'long',
-    })
-    if (!groups[dayKey]) groups[dayKey] = []
-    groups[dayKey].push(t)
-  }
-  return Object.entries(groups).map(([day, items]) => ({ day, items }))
-})
-
-function fmt(value: number): string {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+const {
+  isLoading,
+  monthLabel,
+  prevMonth,
+  nextMonth,
+  filteredTransactions,
+  categoryMap,
+  totalSpent,
+  totalBudget,
+  totalRemaining,
+  categorySpending,
+  entriesByDay,
+} = useMonthlyResume()
 </script>
 
 <template>
@@ -173,7 +77,7 @@ function fmt(value: number): string {
           <span v-if="isLoading" class="text-[18px] opacity-70">Carregando...</span>
           <template v-else>
             <span class="text-[15px] font-medium opacity-70">R$</span>
-            {{ fmt(totalRemaining) }}
+            {{ formatBRL(totalRemaining) }}
           </template>
         </div>
         <div
@@ -199,7 +103,7 @@ function fmt(value: number): string {
                 Orçado
               </div>
               <div class="text-sm font-bold text-white" style="font-family: 'Baloo 2', cursive">
-                R$ {{ fmt(totalBudget) }}
+                R$ {{ formatBRL(totalBudget) }}
               </div>
             </div>
             <div class="flex-1 border-l border-white/15 pl-3">
@@ -207,7 +111,7 @@ function fmt(value: number): string {
                 Gasto
               </div>
               <div class="text-sm font-bold text-[#FFB3A0]" style="font-family: 'Baloo 2', cursive">
-                R$ {{ fmt(totalSpent) }}
+                R$ {{ formatBRL(totalSpent) }}
               </div>
             </div>
             <div class="flex-1 border-l border-white/15 pl-3">
@@ -249,23 +153,24 @@ function fmt(value: number): string {
               :class="
                 row.isWarning
                   ? 'text-[#C0252A]'
-                  : row.pct >= 35
+                  : row.percentage >= 35
                     ? 'text-[#9A7000]'
                     : 'text-[#1E8C45]'
               "
             >
-              R$ {{ fmt(row.spent) }}
+              R$ {{ formatBRL(row.amountSpent) }}
             </span>
           </div>
           <div class="h-2 rounded-full overflow-hidden bg-[#E5D9C3]">
             <div
               class="h-full rounded-full transition-all"
-              :style="{ width: row.pct + '%', background: row.barColor }"
+              :style="{ width: row.percentage + '%', background: row.barColor }"
             />
           </div>
           <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
-            R$ {{ fmt(row.spent) }} de R$ {{ fmt(parseFloat(row.cat.initial_amount)) }} ·
-            {{ row.pct }}% usado {{ row.isWarning ? '⚠️' : '' }}
+            R$ {{ formatBRL(row.amountSpent) }} de R$
+            {{ formatBRL(parseFloat(row.cat.initial_amount)) }} · {{ row.percentage }}% usado
+            {{ row.isWarning ? '⚠️' : '' }}
           </div>
         </div>
       </div>
@@ -289,7 +194,7 @@ function fmt(value: number): string {
 
       <!-- Empty -->
       <div
-        v-else-if="!filteredTxns.length"
+        v-else-if="!filteredTransactions.length"
         class="rounded-2xl p-5 border border-[#E5D9C3] bg-white text-center"
       >
         <p class="text-sm text-[#7A6E5F]">Nenhum lançamento em {{ monthLabel }}.</p>
@@ -303,27 +208,31 @@ function fmt(value: number): string {
             {{ group.day }}
           </div>
           <div
-            v-for="txn in group.items"
-            :key="txn.id"
+            v-for="transaction in group.items"
+            :key="transaction.id"
             class="rounded-[13px] p-3 border border-[#E5D9C3] bg-white flex items-center justify-between"
           >
             <div class="flex items-center gap-2.5">
               <div
-                class="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[15px] shrink-0 bg-[#FEF0E8]"
+                class="w-8.5 h-8.5 rounded-[10px] flex items-center justify-center text-[15px] shrink-0 bg-[#FEF0E8]"
               >
-                {{ txn.category_id ? (catMap[txn.category_id]?.icon ?? '📦') : '💸' }}
+                {{
+                  transaction.category_id
+                    ? (categoryMap[transaction.category_id]?.icon ?? '📦')
+                    : '💸'
+                }}
               </div>
               <div>
                 <div
                   class="text-[13px] font-bold text-[#1A1008]"
                   style="font-family: 'Baloo 2', cursive"
                 >
-                  {{ txn.description }}
+                  {{ transaction.description }}
                 </div>
                 <div class="text-[10px] text-[#7A6E5F] font-semibold">
                   {{
-                    txn.category_id
-                      ? (catMap[txn.category_id]?.name ?? 'Sem categoria')
+                    transaction.category_id
+                      ? (categoryMap[transaction.category_id]?.name ?? 'Sem categoria')
                       : 'Sem categoria'
                   }}
                 </div>
@@ -333,7 +242,7 @@ function fmt(value: number): string {
               class="text-sm font-extrabold text-[#C0252A]"
               style="font-family: 'Baloo 2', cursive"
             >
-              − R$ {{ fmt(parseFloat(txn.amount)) }}
+              − R$ {{ formatBRL(parseFloat(transaction.amount)) }}
             </div>
           </div>
         </template>

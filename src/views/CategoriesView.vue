@@ -8,8 +8,8 @@ import {
   useDeleteCategoryApiCategoriesCategoryIdDelete,
   getListCategoriesApiCategoriesGetQueryKey,
 } from '@/api/generated/categories/categories'
-import type { CategoryResponse } from '@/api/generated/táLisoAPI.schemas'
 import { useApiError } from '@/composables/useApiError'
+import { categoryPercentage, barColor, formatBRL } from '@/utils/categoryHelpers'
 import AppSpinner from '@/components/AppSpinner.vue'
 
 const queryClient = useQueryClient()
@@ -46,26 +46,6 @@ const deleteCategory = useDeleteCategoryApiCategoriesCategoryIdDelete({
     },
   },
 })
-
-function pct(cat: CategoryResponse): number {
-  const initial = parseFloat(cat.initial_amount)
-  const balance = parseFloat(cat.current_balance)
-  if (!initial) return 0
-  return Math.min(100, Math.round(((initial - balance) / initial) * 100))
-}
-
-function barColor(p: number): string {
-  if (p >= 90) return '#C0252A'
-  if (p >= 70) return '#F5C518'
-  return '#1E8C45'
-}
-
-function formatBRL(value: string | number): string {
-  return parseFloat(String(value)).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 function saveCategory() {
   if (!categoryName.value.trim() || !categoryBudget.value) return
@@ -224,13 +204,13 @@ function saveCategory() {
           <div class="h-1.5 rounded-full overflow-hidden bg-[#E5D9C3]">
             <div
               class="h-full rounded-full transition-all"
-              :style="{ width: pct(cat) + '%', background: barColor(pct(cat)) }"
+              :style="{ width: categoryPercentage(cat) + '%', background: barColor(categoryPercentage(cat)) }"
             />
           </div>
           <div class="text-[10px] text-[#7A6E5F] font-semibold mt-1">
             R$
             {{ formatBRL(parseFloat(cat.initial_amount) - parseFloat(cat.current_balance)) }} gasto
-            · {{ pct(cat) }}% usado
+            · {{ categoryPercentage(cat) }}% usado
           </div>
         </div>
       </div>
