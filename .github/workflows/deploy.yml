@@ -31,9 +31,11 @@ jobs:
         working-directory: terraform
         run: terraform init
 
+      # Domínio customizado: crie a variável FRONTEND_DOMAIN no repositório (Settings → Variables → Actions)
+      # com valor ex.: app.ta-liso-app.online. Sem ela, o Terraform remove o domínio do CloudFront a cada deploy.
       - name: Terraform Apply
         working-directory: terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="domain_name=${{ vars.FRONTEND_DOMAIN }}"
 
       - name: Terraform outputs
         id: tf
