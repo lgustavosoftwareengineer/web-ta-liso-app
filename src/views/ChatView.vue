@@ -1,154 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import BottomNav from '@/components/BottomNav.vue'
-import { useListCategoriesApiCategoriesGet, getListCategoriesApiCategoriesGetQueryKey } from '@/api/generated/categories/categories'
-import { useListTransactionsApiTransactionsGet, getListTransactionsApiTransactionsGetQueryKey } from '@/api/generated/transactions/transactions'
-import {
-  useChatApiChatPost,
-  useGetHistoryApiChatGet,
-  getGetHistoryApiChatGetQueryKey,
-} from '@/api/generated/chat/chat'
-import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
-import type { TransactionResponse } from '@/api/generated/táLisoAPI.schemas'
-import { categoryPercentage, barColor } from '@/utils/categoryHelpers'
+import { categoryPercentage, barColor, balanceColor, formatBRL } from '@/utils/categoryHelpers'
 import { useGreeting } from '@/composables/useGreeting'
-import { useToastStore } from '@/stores/toast'
+import { useChat } from '@/composables/useChat'
 
-const queryClient = useQueryClient()
-const toastStore = useToastStore()
-
-// ──────────────────────────────────────────────
-// Data
-// ──────────────────────────────────────────────
-const { data: categories } = useListCategoriesApiCategoriesGet()
-const { data: transactions } = useListTransactionsApiTransactionsGet()
-const { data: settings } = useGetSettingsApiSettingsGet()
-const { data: history, isLoading: historyLoading } = useGetHistoryApiChatGet()
-
-const inputText = ref('')
-const messagesEl = ref<HTMLElement | null>(null)
-
-type ChatMsg =
-  | { role: 'user'; text: string; time: string }
-  | { role: 'bot'; text: string; time: string; transaction?: TransactionResponse; catName?: string; catIcon?: string; remainingBalance?: number }
-
-const messages = ref<ChatMsg[]>([])
-const historyInitialized = ref(false)
+const { categories, messages, historyLoading, inputText, chat, sendMessage, currentTime } =
+  useChat()
 const { getGreetingWithEmoji } = useGreeting()
-
-// Populate messages from history once — wait for transactions + categories so we can
-// render the full transaction card (same style as real-time messages)
-watch([history, transactions, categories], ([h, txns, cats]) => {
-  if (!h || historyInitialized.value) return
-  historyInitialized.value = true
-
-  const txnMap: Record<string, typeof txns extends (infer T)[] | undefined ? NonNullable<T> : never> = {}
-  for (const t of txns ?? []) txnMap[t.id] = t
-
-  messages.value = h.messages.map((msg) => {
-    const base = {
-      role: (msg.role === 'user' ? 'user' : 'bot') as 'user' | 'bot',
-      text: msg.content,
-      time: new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    }
-    if (msg.role !== 'user' && msg.transaction_id) {
-      const txn = txnMap[msg.transaction_id]
-      if (txn) {
-        const cat = (cats ?? []).find((c) => c.id === txn.category_id)
-        return { ...base, transaction: txn, catName: cat?.name, catIcon: cat?.icon ?? undefined } as ChatMsg
-      }
-    }
-    return base as ChatMsg
-  })
-  scrollToBottom()
-}, { immediate: true })
-
-// ──────────────────────────────────────────────
-// Chat mutation
-// ──────────────────────────────────────────────
-const chat = useChatApiChatPost({
-  mutation: {
-    onSuccess: (data) => {
-      if (data.transaction) {
-        const cat = (categories.value ?? []).find((c) => c.id === data.transaction!.category_id)
-        const remaining = cat
-          ? parseFloat(cat.current_balance) - parseFloat(data.transaction.amount)
-          : undefined
-        messages.value.push({
-          role: 'bot',
-          text: data.reply,
-          time: now(),
-          transaction: data.transaction,
-          catName: cat?.name,
-          catIcon: cat?.icon ?? undefined,
-          remainingBalance: remaining,
-        })
-        if (settings.value?.alert_low_balance && cat && remaining !== undefined) {
-          const initial = parseFloat(cat.initial_amount)
-          const pct = initial > 0 ? Math.min(100, Math.round(((initial - remaining) / initial) * 100)) : 100
-          if (pct >= 90) {
-            const msg =
-              remaining < 0
-                ? `${cat.icon ?? '📦'} ${cat.name} passou do limite! Saldo: R$ ${remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
-                : `${cat.icon ?? '📦'} ${cat.name} tá quase no limite! Só sobrou R$ ${remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, cabra!`
-            toastStore.show(msg, 'warning')
-          }
-        }
-        queryClient.invalidateQueries({ queryKey: getListTransactionsApiTransactionsGetQueryKey() })
-        queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
-      } else {
-        messages.value.push({ role: 'bot', text: data.reply, time: now() })
-      }
-      queryClient.invalidateQueries({ queryKey: getGetHistoryApiChatGetQueryKey() })
-      scrollToBottom()
-    },
-    onError: () => {
-      messages.value.push({
-        role: 'bot',
-        text: 'Eita! Tive um problema aqui. Tenta de novo, visse? 😅',
-        time: now(),
-      })
-      scrollToBottom()
-    },
-  },
-})
-
-// ──────────────────────────────────────────────
-// Actions
-// ──────────────────────────────────────────────
-function sendMessage() {
-  const text = inputText.value.trim()
-  if (!text || chat.isPending.value) return
-
-  messages.value.push({ role: 'user', text, time: now() })
-  inputText.value = ''
-  scrollToBottom()
-
-  chat.mutate({ data: { message: text } })
-}
-
-// ──────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────
-function now(): string {
-  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-}
-
-function fmt(value: number): string {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-async function scrollToBottom() {
-  await nextTick()
-  if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
-}
-
-function balanceColor(p: number): string {
-  if (p >= 90) return 'text-[#C0252A]'
-  if (p >= 70) return 'text-[#9A7000]'
-  return 'text-[#1E8C45]'
-}
 </script>
 
 <template>
@@ -176,16 +34,21 @@ function balanceColor(p: number): string {
       <!-- Main: messages + input -->
       <div class="flex-1 flex flex-col min-h-0 border-r-0 lg:border-r lg:border-[#E5D9C3]">
         <div
-          ref="messagesEl"
+          ref="messagesContainer"
           class="flex-1 overflow-y-auto p-3.5 lg:p-5 flex flex-col gap-2.5 lg:gap-3 bg-[#F5EDD8]"
         >
           <!-- History loading skeleton -->
           <template v-if="historyLoading">
-            <div v-for="i in 4" :key="i" class="flex" :class="i % 2 === 0 ? 'justify-end' : 'justify-start'">
+            <div
+              v-for="skeletonIndex in 4"
+              :key="skeletonIndex"
+              class="flex"
+              :class="skeletonIndex % 2 === 0 ? 'justify-end' : 'justify-start'"
+            >
               <div
                 class="h-10 rounded-2xl animate-pulse"
-                :class="i % 2 === 0 ? 'w-48 rounded-br' : 'w-56 rounded-bl'"
-                style="background: #E5D9C3"
+                :class="skeletonIndex % 2 === 0 ? 'w-48 rounded-br' : 'w-56 rounded-bl'"
+                style="background: #e5d9c3"
               />
             </div>
           </template>
@@ -196,69 +59,120 @@ function balanceColor(p: number): string {
               <div
                 class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
               >
-                Eita, {{ getGreetingWithEmoji() }}!<br />Manda aí teus gastos do jeito que cê fala, visse:<br /><br />Ex: <em>gastei 200 no mercado</em> ou <em>Uber 45 transporte</em>
+                Eita, {{ getGreetingWithEmoji() }}!<br />Manda aí teus gastos do jeito que cê fala,
+                visse:<br /><br />Ex: <em>gastei 200 no mercado</em> ou <em>Uber 45 transporte</em>
               </div>
-              <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ now() }}</div>
+              <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ currentTime() }}</div>
             </div>
 
-            <template v-for="(msg, idx) in messages" :key="idx">
-            <!-- User message -->
-            <div v-if="msg.role === 'user'" class="max-w-[82%] lg:max-w-[65%] self-end">
-              <div
-                class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-br text-xs lg:text-[13px] leading-relaxed text-white"
-                style="background: linear-gradient(135deg, #e8500a, #c03a00)"
-              >
-                {{ msg.text }}
-              </div>
-              <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5 text-right">
-                {{ msg.time }}
-              </div>
-            </div>
-
-            <!-- Bot message — success (transaction registered) -->
-            <div v-else-if="msg.role === 'bot' && msg.transaction" class="max-w-[82%] lg:max-w-[65%] self-start">
-              <div
-                class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
-              >
-                Anotado, cabra! ✅
+            <template v-for="(message, messageIndex) in messages" :key="messageIndex">
+              <!-- User message -->
+              <div v-if="message.role === 'user'" class="max-w-[82%] lg:max-w-[65%] self-end">
                 <div
-                  class="inline-flex items-center gap-1.5 rounded-full py-1 px-2.5 mt-1.5 text-[11px] font-bold text-[#1E8C45] border border-[#1E8C45]/20"
-                  style="background: #E8F7EE"
+                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-br text-xs lg:text-[13px] leading-relaxed text-white"
+                  style="background: linear-gradient(135deg, #e8500a, #c03a00)"
                 >
-                  {{ msg.catIcon ?? '📦' }} − R$ {{ fmt(parseFloat(msg.transaction.amount)) }} em {{ msg.catName ?? 'categoria' }}
+                  {{ message.text }}
                 </div>
-                <template v-if="msg.remainingBalance !== undefined">
-                  <br />
-                  <span class="text-[11px] text-[#7A6E5F]">
-                    Saldo restante: <strong>R$ {{ fmt(msg.remainingBalance) }}</strong>
-                  </span>
-                </template>
-                <div class="mt-1.5 pt-1.5 border-t border-[#E5D9C3] text-[11px] text-[#7A6E5F] italic">
-                  {{ msg.text }}
+                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5 text-right">
+                  {{ message.time }}
                 </div>
               </div>
-              <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ msg.time }}</div>
-            </div>
 
-            <!-- Bot message — plain (info / error / welcome) -->
-            <div v-else class="max-w-[82%] lg:max-w-[65%] self-start">
+              <!-- Bot message — success (transaction registered) -->
               <div
-                class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
-                v-html="msg.text.replace(/\n/g, '<br>')"
-              />
-              <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ msg.time }}</div>
-            </div>
-          </template>
-          </template><!-- /v-else -->
+                v-else-if="message.role === 'bot' && message.transaction"
+                class="max-w-[82%] lg:max-w-[65%] self-start"
+              >
+                <div
+                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
+                >
+                  Anotado, cabra! ✅
+                  <div
+                    class="inline-flex items-center gap-1.5 rounded-full py-1 px-2.5 mt-1.5 text-[11px] font-bold text-[#1E8C45] border border-[#1E8C45]/20"
+                    style="background: #e8f7ee"
+                  >
+                    {{ message.catIcon ?? '📦' }} − R$
+                    {{ formatBRL(parseFloat(message.transaction.amount)) }} em
+                    {{ message.catName ?? 'categoria' }}
+                  </div>
+                  <template v-if="message.remainingBalance !== undefined">
+                    <br />
+                    <span class="text-[11px] text-[#7A6E5F]">
+                      Saldo restante: <strong>R$ {{ formatBRL(message.remainingBalance) }}</strong>
+                    </span>
+                  </template>
+                  <div
+                    class="mt-1.5 pt-1.5 border-t border-[#E5D9C3] text-[11px] text-[#7A6E5F] italic"
+                  >
+                    {{ message.text }}
+                  </div>
+                </div>
+                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
+                  {{ message.time }}
+                </div>
+              </div>
+
+              <!-- Bot message — insufficient balance -->
+              <div
+                v-else-if="message.role === 'bot' && message.insufficientBalance"
+                class="max-w-[82%] lg:max-w-[65%] self-start"
+              >
+                <div
+                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-[#FAEAEA] border border-[#C0252A]/20 text-[#1A1008]"
+                >
+                  🚫 {{ message.text }}
+                  <div
+                    class="mt-1.5 pt-1.5 border-t border-[#C0252A]/15 flex flex-col gap-0.5 text-[11px]"
+                  >
+                    <span class="text-[#7A6E5F]"
+                      >Disponível:
+                      <strong class="text-[#1A1008]"
+                        >R$
+                        {{ formatBRL(parseFloat(message.insufficientBalance.available)) }}</strong
+                      ></span
+                    >
+                    <span class="text-[#7A6E5F]"
+                      >Solicitado:
+                      <strong class="text-[#C0252A]"
+                        >R$
+                        {{ formatBRL(parseFloat(message.insufficientBalance.requested)) }}</strong
+                      ></span
+                    >
+                  </div>
+                </div>
+                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
+                  {{ message.time }}
+                </div>
+              </div>
+
+              <!-- Bot message — plain (info / error / welcome) -->
+              <div v-else class="max-w-[82%] lg:max-w-[65%] self-start">
+                <div
+                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
+                  v-html="message.text.replace(/\n/g, '<br>')"
+                />
+                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
+                  {{ message.time }}
+                </div>
+              </div>
+            </template> </template
+          ><!-- /v-else -->
 
           <!-- Typing indicator -->
           <div v-if="chat.isPending.value" class="max-w-[82%] self-start">
             <div
               class="py-2.5 px-4 rounded-2xl rounded-bl bg-white border border-[#E5D9C3] text-[#7A6E5F] text-xs flex items-center gap-1"
             >
-              <span class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:0ms]" />
-              <span class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:150ms]" />
-              <span class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:300ms]" />
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:0ms]"
+              />
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:150ms]"
+              />
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:300ms]"
+              />
             </div>
           </div>
         </div>
@@ -299,25 +213,25 @@ function balanceColor(p: number): string {
         </div>
         <div class="flex-1 overflow-y-auto p-3">
           <div
-            v-for="cat in categories ?? []"
-            :key="cat.id"
+            v-for="category in categories ?? []"
+            :key="category.id"
             class="flex items-center justify-between py-2.5 border-b border-[#E5D9C3] last:border-0"
           >
             <div class="flex items-center gap-2">
-              <span class="text-lg">{{ cat.icon ?? '📦' }}</span>
+              <span class="text-lg">{{ category.icon ?? '📦' }}</span>
               <div>
                 <div
                   class="text-xs font-bold text-[#1A1008]"
                   style="font-family: 'Baloo 2', cursive"
                 >
-                  {{ cat.name }}
+                  {{ category.name }}
                 </div>
                 <div class="w-[120px] h-1 rounded-full overflow-hidden bg-[#E5D9C3] mt-1">
                   <div
                     class="h-full rounded-full transition-all"
                     :style="{
-                      width: categoryPercentage(cat) + '%',
-                      background: barColor(categoryPercentage(cat)),
+                      width: categoryPercentage(category) + '%',
+                      background: barColor(categoryPercentage(category)),
                     }"
                   />
                 </div>
@@ -326,11 +240,11 @@ function balanceColor(p: number): string {
             <div
               class="text-[13px] font-extrabold shrink-0"
               style="font-family: 'Baloo 2', cursive"
-              :class="balanceColor(categoryPercentage(cat))"
+              :class="balanceColor(categoryPercentage(category))"
             >
               R$
               {{
-                parseFloat(cat.current_balance).toLocaleString('pt-BR', {
+                parseFloat(category.current_balance).toLocaleString('pt-BR', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })

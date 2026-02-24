@@ -1,0 +1,204 @@
+import { ref, watch, nextTick } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import {
+  useListCategoriesApiCategoriesGet,
+  getListCategoriesApiCategoriesGetQueryKey,
+} from '@/api/generated/categories/categories'
+import {
+  useListTransactionsApiTransactionsGet,
+  getListTransactionsApiTransactionsGetQueryKey,
+} from '@/api/generated/transactions/transactions'
+import {
+  useChatApiChatPost,
+  useGetHistoryApiChatGet,
+  getGetHistoryApiChatGetQueryKey,
+} from '@/api/generated/chat/chat'
+import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
+import type {
+  TransactionResponse,
+  ChatResponseInsufficientBalance,
+  CategoryResponse,
+} from '@/api/generated/táLisoAPI.schemas'
+import { useToastStore } from '@/stores/toast'
+import { formatCurrentTime } from '@/utils/dateHelpers'
+
+export type ChatMessage =
+  | { role: 'user'; text: string; time: string }
+  | {
+    role: 'bot'
+    text: string
+    time: string
+    transaction?: TransactionResponse
+    catName?: string
+    catIcon?: string
+    remainingBalance?: number
+    insufficientBalance?: ChatResponseInsufficientBalance
+  }
+
+export function useChat() {
+  const queryClient = useQueryClient()
+  const toastStore = useToastStore()
+
+  const { data: categories } = useListCategoriesApiCategoriesGet()
+  const { data: transactions } = useListTransactionsApiTransactionsGet()
+  const { data: settings } = useGetSettingsApiSettingsGet()
+  const { data: history, isLoading: historyLoading } = useGetHistoryApiChatGet()
+
+  const inputText = ref('')
+  const messagesContainer = ref<HTMLElement | null>(null)
+  const messages = ref<ChatMessage[]>([])
+  const historyInitialized = ref(false)
+
+  // ── Helpers ──
+
+  async function scrollToBottom() {
+    await nextTick()
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  }
+
+  // ── Low balance alert ──
+
+  function buildLowBalanceToastMessage(category: CategoryResponse, remainingBalance: number): string {
+    const icon = category.icon ?? '📦'
+    const formattedBalance = remainingBalance.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    return remainingBalance < 0
+      ? `${icon} ${category.name} passou do limite! Saldo: R$ ${formattedBalance}.`
+      : `${icon} ${category.name} tá quase no limite! Só sobrou R$ ${formattedBalance}, cabra!`
+  }
+
+  function checkAndShowLowBalanceAlert(category: CategoryResponse, remainingBalance: number) {
+    if (!settings.value?.alert_low_balance) return
+    const initialBudget = parseFloat(category.initial_amount)
+    const spentPercentage =
+      initialBudget > 0
+        ? Math.min(100, Math.round(((initialBudget - remainingBalance) / initialBudget) * 100))
+        : 100
+    if (spentPercentage >= 90) {
+      toastStore.show(buildLowBalanceToastMessage(category, remainingBalance), 'warning')
+    }
+  }
+
+  // ── History initialization ──
+
+  watch(
+    [history, transactions, categories],
+    ([chatHistory, allTransactions, allCategories]) => {
+      if (!chatHistory || historyInitialized.value) return
+      historyInitialized.value = true
+
+      const transactionById: Record<
+        string,
+        typeof allTransactions extends (infer T)[] | undefined ? NonNullable<T> : never
+      > = {}
+      for (const transaction of allTransactions ?? []) transactionById[transaction.id] = transaction
+
+      messages.value = chatHistory.messages.map((historyEntry) => {
+        const baseMessage = {
+          role: (historyEntry.role === 'user' ? 'user' : 'bot') as 'user' | 'bot',
+          text: historyEntry.content,
+          time: new Date(historyEntry.created_at).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }
+        if (historyEntry.role !== 'user' && historyEntry.transaction_id) {
+          const matchedTransaction = transactionById[historyEntry.transaction_id]
+          if (matchedTransaction) {
+            const relatedCategory = (allCategories ?? []).find(
+              (c) => c.id === matchedTransaction.category_id,
+            )
+            return {
+              ...baseMessage,
+              transaction: matchedTransaction,
+              catName: relatedCategory?.name,
+              catIcon: relatedCategory?.icon ?? undefined,
+            } as ChatMessage
+          }
+        }
+        return baseMessage as ChatMessage
+      })
+      scrollToBottom()
+    },
+    { immediate: true },
+  )
+
+  // ── Chat mutation ──
+
+  const chat = useChatApiChatPost({
+    mutation: {
+      onSuccess: (data) => {
+        if (data.transaction) {
+          const transactionCategory = (categories.value ?? []).find(
+            (c) => c.id === data.transaction!.category_id,
+          )
+          const remainingBalance = transactionCategory
+            ? parseFloat(transactionCategory.current_balance) - parseFloat(data.transaction.amount)
+            : undefined
+
+          messages.value.push({
+            role: 'bot',
+            text: data.reply,
+            time: formatCurrentTime(),
+            transaction: data.transaction,
+            catName: transactionCategory?.name,
+            catIcon: transactionCategory?.icon ?? undefined,
+            remainingBalance,
+          })
+
+          if (transactionCategory && remainingBalance !== undefined) {
+            checkAndShowLowBalanceAlert(transactionCategory, remainingBalance)
+          }
+
+          queryClient.invalidateQueries({ queryKey: getListTransactionsApiTransactionsGetQueryKey() })
+          queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
+        } else if (data.insufficient_balance) {
+          messages.value.push({
+            role: 'bot',
+            text: data.reply,
+            time: formatCurrentTime(),
+            insufficientBalance: data.insufficient_balance,
+          })
+        } else {
+          messages.value.push({ role: 'bot', text: data.reply, time: formatCurrentTime() })
+        }
+        queryClient.invalidateQueries({ queryKey: getGetHistoryApiChatGetQueryKey() })
+        scrollToBottom()
+      },
+      onError: () => {
+        messages.value.push({
+          role: 'bot',
+          text: 'Eita! Tive um problema aqui. Tenta de novo, visse? 😅',
+          time: formatCurrentTime(),
+        })
+        scrollToBottom()
+      },
+    },
+  })
+
+  function sendMessage() {
+    const text = inputText.value.trim()
+    if (!text || chat.isPending.value) return
+
+    messages.value.push({ role: 'user', text, time: formatCurrentTime() })
+    inputText.value = ''
+    scrollToBottom()
+
+    chat.mutate({ data: { message: text } })
+  }
+
+  return {
+    categories,
+    messages,
+    historyLoading,
+    inputText,
+    messagesContainer,
+    chat,
+    sendMessage,
+    currentTime: formatCurrentTime,
+  }
+}
