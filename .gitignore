@@ -47,3 +47,5 @@ mockup/*
 
 # Generated API hooks (regenerate with npm run gen:api)
 src/api/generated/
+
+.claude

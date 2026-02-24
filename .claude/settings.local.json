@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npm install:*)",
-      "Bash(npm run gen:api:*)",
-      "Bash(ls \"c:\\\\Users\\\\Luiz Gustavo\\\\Documents\\\\Projects\\\\ta-liso-app\\\\web-ta-liso-app\\\\docs\"\" && echo \"---\" && ls \"c:UsersLuiz GustavoDocumentsProjectsta-liso-appdocs\"\")"
-    ]
-  }
-}
