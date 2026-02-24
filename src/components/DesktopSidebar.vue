@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useUser } from '@/composables/useUser'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
+
+const { initials, email, name } = useUser()
 
 function isActive(name: string) {
   return route.name === name
@@ -9,10 +12,7 @@ function isActive(name: string) {
 </script>
 
 <template>
-  <aside
-    class="w-[240px] shrink-0 flex flex-col h-full"
-    style="background: #1A1008"
-  >
+  <aside class="w-60 shrink-0 flex flex-col h-full" style="background: #1a1008">
     <div class="py-6 px-5 border-b border-white/10">
       <div
         class="text-[22px] font-extrabold text-white leading-none"
@@ -26,28 +26,44 @@ function isActive(name: string) {
       <RouterLink
         to="/"
         class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
-        :class="isActive('home') ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]' : 'text-white/45 hover:text-white/80 hover:bg-white/5'"
+        :class="
+          isActive('home')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
       >
         <span class="text-[17px]">🏠</span> Início
       </RouterLink>
       <RouterLink
         to="/chat"
         class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
-        :class="isActive('chat') ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]' : 'text-white/45 hover:text-white/80 hover:bg-white/5'"
+        :class="
+          isActive('chat')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
       >
         <span class="text-[17px]">💬</span> Chat
       </RouterLink>
       <RouterLink
         to="/categorias"
         class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
-        :class="isActive('categorias') ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]' : 'text-white/45 hover:text-white/80 hover:bg-white/5'"
+        :class="
+          isActive('categorias')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
       >
         <span class="text-[17px]">📂</span> Categorias
       </RouterLink>
       <RouterLink
         to="/resumo"
         class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
-        :class="isActive('resumo') ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]' : 'text-white/45 hover:text-white/80 hover:bg-white/5'"
+        :class="
+          isActive('resumo')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
       >
         <span class="text-[17px]">📊</span> Resumo
       </RouterLink>
@@ -55,7 +71,11 @@ function isActive(name: string) {
       <RouterLink
         to="/configuracoes"
         class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
-        :class="isActive('configuracoes') ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]' : 'text-white/45 hover:text-white/80 hover:bg-white/5'"
+        :class="
+          isActive('configuracoes')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
       >
         <span class="text-[17px]">⚙️</span> Configurações
       </RouterLink>
@@ -64,13 +84,16 @@ function isActive(name: string) {
       <RouterLink
         to="/configuracoes"
         class="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-[13px] font-extrabold shrink-0 no-underline"
-        style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A 0%, #F5C518 100%)"
+        style="
+          font-family: 'Baloo 2', cursive;
+          background: linear-gradient(135deg, #e8500a 0%, #f5c518 100%);
+        "
       >
-        JA
+        {{ initials }}
       </RouterLink>
       <div>
-        <div class="text-[12px] font-bold text-white/75">João Alves</div>
-        <div class="text-[10px] text-white/35">joao@email.com</div>
+        <div class="text-[12px] font-bold text-white/75">{{ name }}</div>
+        <div class="text-[10px] text-white/35">{{ email }}</div>
       </div>
     </div>
   </aside>

@@ -1,14 +1,26 @@
 <script setup lang="ts">
+import { useFormattedDate } from '@/composables/useFormattedDate'
+import { useUser } from '@/composables/useUser'
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 
 const route = useRoute()
 
+const { name } = useUser()
+const { formatCurrentDate } = useFormattedDate()
+
+function getGreetingWithEmoji(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Bom dia ☀️'
+  if (h < 18) return 'Boa tarde 🌤️'
+  return 'Boa noite 🌙'
+}
+
 const title = computed(() => {
   const meta = route.meta?.topbar as { title?: string; subtitle?: string } | undefined
   if (meta?.title) return meta.title
   const names: Record<string, string> = {
-    home: 'E aí, João! 👋',
+    home: `E aí, ${name.value}! 👋`,
     categorias: 'Categorias',
     chat: 'Chat',
     resumo: 'Resumo',
@@ -20,8 +32,9 @@ const title = computed(() => {
 const subtitle = computed(() => {
   const meta = route.meta?.topbar as { title?: string; subtitle?: string } | undefined
   if (meta?.subtitle) return meta.subtitle
+
   const names: Record<string, string> = {
-    home: 'Fevereiro 2025 · aqui tá o resumo do mês',
+    home: `${getGreetingWithEmoji()} · ${formatCurrentDate()}`,
     categorias: 'Gerencie suas categorias e orçamentos',
     chat: 'Registre gastos por mensagem',
     resumo: 'Visão geral do mês',
@@ -58,7 +71,11 @@ const subtitle = computed(() => {
       <RouterLink
         to="/chat"
         class="py-2 px-4 rounded-[10px] text-[12px] font-bold border-0 text-white cursor-pointer transition-opacity hover:opacity-90 no-underline"
-        style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A, #F5C518); box-shadow: 0 4px 12px rgba(232,80,10,0.3)"
+        style="
+          font-family: 'Baloo 2', cursive;
+          background: linear-gradient(135deg, #e8500a, #f5c518);
+          box-shadow: 0 4px 12px rgba(232, 80, 10, 0.3);
+        "
       >
         💬 Registrar gasto
       </RouterLink>

@@ -16,13 +16,43 @@ const router = createRouter({
     return { top: 0 }
   },
   routes: [
-    { path: '/', name: 'home', component: HomeView, meta: { topbar: { title: 'E aí, João! 👋', subtitle: 'Fevereiro 2025 · aqui tá o resumo do mês' } } },
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+      meta: { topbar: { subtitle: '' } },
+    },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/token', name: 'token', component: TokenView },
-    { path: '/categorias', name: 'categorias', component: CategoriesView, meta: { topbar: { subtitle: 'Gerencie suas categorias e orçamentos' } } },
-    { path: '/chat', name: 'chat', component: ChatView, meta: { topbar: { title: '💬 Chat financeiro', subtitle: 'Digite seus gastos em linguagem natural' } } },
-    { path: '/resumo', name: 'resumo', component: ResumoView, meta: { topbar: { subtitle: 'Visão geral do mês' } } },
-    { path: '/configuracoes', name: 'configuracoes', component: ConfiguracoesView, meta: { topbar: { subtitle: 'Perfil e preferências' } } },
+    {
+      path: '/categorias',
+      name: 'categorias',
+      component: CategoriesView,
+      meta: { topbar: { subtitle: 'Gerencie suas categorias e orçamentos' } },
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: ChatView,
+      meta: {
+        topbar: {
+          title: '💬 Chat financeiro',
+          subtitle: 'Digite seus gastos em linguagem natural',
+        },
+      },
+    },
+    {
+      path: '/resumo',
+      name: 'resumo',
+      component: ResumoView,
+      meta: { topbar: { subtitle: 'Visão geral do mês' } },
+    },
+    {
+      path: '/configuracoes',
+      name: 'configuracoes',
+      component: ConfiguracoesView,
+      meta: { topbar: { subtitle: 'Perfil e preferências' } },
+    },
   ],
 })
 
