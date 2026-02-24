@@ -1,12 +1,31 @@
 <script setup lang="ts">
+import { watch, nextTick } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
 import { categoryPercentage, barColor, balanceColor, formatBRL } from '@/utils/categoryHelpers'
 import { useGreeting } from '@/composables/useGreeting'
 import { useChat } from '@/composables/useChat'
 
-const { categories, messages, historyLoading, inputText, chat, sendMessage, currentTime } =
-  useChat()
+const {
+  categories,
+  messages,
+  historyLoading,
+  inputText,
+  messagesContainer,
+  chat,
+  sendMessage,
+  currentTime,
+} = useChat()
 const { getGreetingWithEmoji } = useGreeting()
+
+// Assim que o histórico terminar de carregar, scrolla para a última mensagem
+watch(historyLoading, async (loading, wasLoading) => {
+  if (wasLoading && !loading) {
+    await nextTick()
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  }
+})
 </script>
 
 <template>
