@@ -56,3 +56,6 @@ terraform/terraform.tfstate.backup
 terraform/*.tfvars
 
 .claude
+
+# Backend repo (cloned for local dev)
+api-ta-liso-app/
