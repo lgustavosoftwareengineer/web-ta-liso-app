@@ -91,7 +91,7 @@ async function sendCode() {
             v-model="email"
             type="email"
             placeholder="joao@email.com"
-            class="w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-white/40 bg-white/8 border border-white/20 outline-none focus:border-[#F5C518]"
+            class="w-full min-w-0 rounded-xl px-4 py-3.5 text-base text-white placeholder:text-white/40 bg-white/8 border border-white/20 outline-none focus:border-[#F5C518]"
             @keydown.enter="sendCode"
           >
           <p v-if="errorMsg" class="text-xs text-[#F5C518] font-semibold">{{ errorMsg }}</p>

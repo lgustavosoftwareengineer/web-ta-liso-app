@@ -60,7 +60,7 @@ function saveCategory() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F5EDD8]">
+  <div class="h-full min-h-0 flex flex-col bg-[#F5EDD8]">
     <header
       class="flex items-center justify-between px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3] bg-white"
     >

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { watch, nextTick } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
+import ChatMessage from '@/components/ChatMessage.vue'
 import { categoryPercentage, barColor, balanceColor, formatBRL } from '@/utils/categoryHelpers'
-import { useGreeting } from '@/composables/useGreeting'
+import { getGreetingWithEmoji } from '@/composables/useGreeting'
 import { useChat } from '@/composables/useChat'
 
 const {
@@ -13,26 +14,48 @@ const {
   messagesContainer,
   chat,
   sendMessage,
+  scrollToBottom,
   currentTime,
 } = useChat()
-const { getGreetingWithEmoji } = useGreeting()
 
-// Assim que o histórico terminar de carregar, scrolla para a última mensagem
-watch(historyLoading, async (loading, wasLoading) => {
-  if (wasLoading && !loading) {
-    await nextTick()
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
-  }
+const isAtBottom = ref(true)
+const SCROLL_THRESHOLD = 80
+
+function checkScrollPosition() {
+  const el = messagesContainer.value
+  if (!el) return
+  const { scrollTop, scrollHeight, clientHeight } = el
+  isAtBottom.value = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD
+}
+
+function onScrollToBottomClick() {
+  scrollToBottom()
+  isAtBottom.value = true
+}
+
+// Anexa o listener quando o container estiver disponível (ref pode vir depois do mount)
+watch(
+  messagesContainer,
+  (el, prevEl) => {
+    if (prevEl) prevEl.removeEventListener('scroll', checkScrollPosition)
+    if (!el) return
+    el.addEventListener('scroll', checkScrollPosition)
+    // Sincroniza estado inicial (ex.: usuário já rolou para cima)
+    checkScrollPosition()
+  },
+  { immediate: true },
+)
+onUnmounted(() => {
+  const el = messagesContainer.value
+  if (el) el.removeEventListener('scroll', checkScrollPosition)
 })
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F5EDD8] lg:min-h-0 lg:h-full">
-    <!-- Mobile header -->
+  <div class="h-full min-h-0 flex flex-col bg-[#F5EDD8] lg:min-h-0">
+    <!-- Mobile header: fixo no topo em mobile -->
     <header
-      class="flex items-center gap-2.5 px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3] bg-white"
+      class="flex items-center gap-2.5 px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3] bg-white fixed top-0 left-0 right-0 z-20 lg:static"
     >
       <div
         class="w-9 h-9 rounded-[11px] flex items-center justify-center text-lg shrink-0"
@@ -48,13 +71,16 @@ watch(historyLoading, async (loading, wasLoading) => {
       </div>
     </header>
 
+    <!-- Spacer para header fixo no mobile -->
+    <div class="shrink-0 h-14 lg:hidden" aria-hidden="true" />
+
     <!-- Chat layout: messages + input; on desktop add sidebar -->
     <div class="flex-1 flex flex-col min-h-0 lg:grid lg:grid-cols-[1fr_320px]">
       <!-- Main: messages + input -->
-      <div class="flex-1 flex flex-col min-h-0 border-r-0 lg:border-r lg:border-[#E5D9C3]">
+      <div class="flex-1 flex flex-col min-h-0 border-r-0 lg:border-r lg:border-[#E5D9C3] relative">
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-3.5 lg:p-5 flex flex-col gap-2.5 lg:gap-3 bg-[#F5EDD8]"
+          class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3.5 lg:p-5 pb-12 lg:pb-5 flex flex-col gap-2.5 lg:gap-3 bg-[#F5EDD8] scroll-smooth"
         >
           <!-- History loading skeleton -->
           <template v-if="historyLoading">
@@ -84,99 +110,12 @@ watch(historyLoading, async (loading, wasLoading) => {
               <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">{{ currentTime() }}</div>
             </div>
 
-            <template v-for="(message, messageIndex) in messages" :key="messageIndex">
-              <!-- User message -->
-              <div v-if="message.role === 'user'" class="max-w-[82%] lg:max-w-[65%] self-end">
-                <div
-                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-br text-xs lg:text-[13px] leading-relaxed text-white"
-                  style="background: linear-gradient(135deg, #e8500a, #c03a00)"
-                >
-                  {{ message.text }}
-                </div>
-                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5 text-right">
-                  {{ message.time }}
-                </div>
-              </div>
-
-              <!-- Bot message — success (transaction registered) -->
-              <div
-                v-else-if="message.role === 'bot' && message.transaction"
-                class="max-w-[82%] lg:max-w-[65%] self-start"
-              >
-                <div
-                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
-                >
-                  Anotado, cabra! ✅
-                  <div
-                    class="inline-flex items-center gap-1.5 rounded-full py-1 px-2.5 mt-1.5 text-[11px] font-bold text-[#1E8C45] border border-[#1E8C45]/20"
-                    style="background: #e8f7ee"
-                  >
-                    {{ message.catIcon ?? '📦' }} − R$
-                    {{ formatBRL(parseFloat(message.transaction.amount)) }} em
-                    {{ message.catName ?? 'categoria' }}
-                  </div>
-                  <template v-if="message.remainingBalance !== undefined">
-                    <br />
-                    <span class="text-[11px] text-[#7A6E5F]">
-                      Saldo restante: <strong>R$ {{ formatBRL(message.remainingBalance) }}</strong>
-                    </span>
-                  </template>
-                  <div
-                    class="mt-1.5 pt-1.5 border-t border-[#E5D9C3] text-[11px] text-[#7A6E5F] italic"
-                  >
-                    {{ message.text }}
-                  </div>
-                </div>
-                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
-                  {{ message.time }}
-                </div>
-              </div>
-
-              <!-- Bot message — insufficient balance -->
-              <div
-                v-else-if="message.role === 'bot' && message.insufficientBalance"
-                class="max-w-[82%] lg:max-w-[65%] self-start"
-              >
-                <div
-                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-[#FAEAEA] border border-[#C0252A]/20 text-[#1A1008]"
-                >
-                  🚫 {{ message.text }}
-                  <div
-                    class="mt-1.5 pt-1.5 border-t border-[#C0252A]/15 flex flex-col gap-0.5 text-[11px]"
-                  >
-                    <span class="text-[#7A6E5F]"
-                      >Disponível:
-                      <strong class="text-[#1A1008]"
-                        >R$
-                        {{ formatBRL(parseFloat(message.insufficientBalance.available)) }}</strong
-                      ></span
-                    >
-                    <span class="text-[#7A6E5F]"
-                      >Solicitado:
-                      <strong class="text-[#C0252A]"
-                        >R$
-                        {{ formatBRL(parseFloat(message.insufficientBalance.requested)) }}</strong
-                      ></span
-                    >
-                  </div>
-                </div>
-                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
-                  {{ message.time }}
-                </div>
-              </div>
-
-              <!-- Bot message — plain (info / error / welcome) -->
-              <div v-else class="max-w-[82%] lg:max-w-[65%] self-start">
-                <div
-                  class="py-2.5 px-3.5 lg:py-3 lg:px-4 rounded-2xl rounded-bl text-xs lg:text-[13px] leading-relaxed bg-white border border-[#E5D9C3] text-[#1A1008]"
-                  v-html="message.text.replace(/\n/g, '<br>')"
-                />
-                <div class="text-[10px] text-[#7A6E5F] font-semibold mt-0.5">
-                  {{ message.time }}
-                </div>
-              </div>
-            </template> </template
-          ><!-- /v-else -->
+            <ChatMessage
+              v-for="(message, messageIndex) in messages"
+              :key="messageIndex"
+              :message="message"
+            />
+          </template>
 
           <!-- Typing indicator -->
           <div v-if="chat.isPending.value" class="max-w-[82%] self-start">
@@ -196,15 +135,34 @@ watch(historyLoading, async (loading, wasLoading) => {
           </div>
         </div>
 
-        <!-- Input area -->
+        <!-- Botão scroll: irmão do container de mensagens, absolute na coluna = fica fixo no canto da área visível (não rola com o conteúdo) -->
+        <Transition name="fade">
+          <button
+            v-show="!isAtBottom"
+            type="button"
+            class="absolute bottom-20 right-4 z-30 w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105 active:scale-95 lg:bottom-20 lg:right-8"
+            style="
+              background: linear-gradient(135deg, #e8500a, #f5c518);
+              box-shadow: 0 4px 14px rgba(232, 80, 10, 0.4);
+            "
+            aria-label="Ir para a última mensagem"
+            @click="onScrollToBottomClick"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v9.586l4.293-4.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 12.586V3a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </Transition>
+
+        <!-- Input area: fixa na parte inferior em mobile (acima do BottomNav) -->
         <div
-          class="shrink-0 flex gap-2 lg:gap-2.5 p-2.5 lg:p-4 border-t-2 lg:border-t border-[#E5D9C3] bg-white"
+          class="shrink-0 flex gap-2 lg:gap-2.5 p-2.5 lg:p-4 border-t-2 lg:border-t border-[#E5D9C3] bg-white fixed left-0 right-0 bottom-[86px] z-20 lg:relative lg:bottom-auto lg:left-auto lg:right-auto"
         >
           <input
             v-model="inputText"
             type="text"
             placeholder="Ex: gastei 80 reais no mercado..."
-            class="flex-1 rounded-full py-2 px-3.5 lg:py-2.5 lg:px-4 text-xs lg:text-[13px] text-[#1A1008] bg-[#F5EDD8] border border-[#E5D9C3] outline-none"
+            class="flex-1 min-w-0 w-full rounded-full py-2 px-3.5 lg:py-2.5 lg:px-4 text-base lg:text-[13px] text-[#1A1008] bg-[#F5EDD8] border border-[#E5D9C3] outline-none"
             @keydown.enter="sendMessage"
           />
           <button
@@ -220,6 +178,9 @@ watch(historyLoading, async (loading, wasLoading) => {
             ➤
           </button>
         </div>
+
+        <!-- Spacer para input fixo no mobile (evita que o flex quebre) -->
+        <div class="shrink-0 h-16 lg:hidden" aria-hidden="true" />
       </div>
 
       <!-- Desktop sidebar: category balances -->
@@ -261,13 +222,7 @@ watch(historyLoading, async (loading, wasLoading) => {
               style="font-family: 'Baloo 2', cursive"
               :class="balanceColor(categoryPercentage(category))"
             >
-              R$
-              {{
-                parseFloat(category.current_balance).toLocaleString('pt-BR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })
-              }}
+              R$ {{ formatBRL(category.current_balance) }}
             </div>
           </div>
           <div class="mt-4 p-3 rounded-[10px] border border-[#E5D9C3] bg-[#F5EDD8]">
@@ -288,3 +243,14 @@ watch(historyLoading, async (loading, wasLoading) => {
     <BottomNav />
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

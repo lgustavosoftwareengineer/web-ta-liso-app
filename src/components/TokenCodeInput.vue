@@ -51,7 +51,7 @@ function onPaste(e: ClipboardEvent) {
 </script>
 
 <template>
-  <div style="display: flex; gap: 8px">
+  <div class="w-full min-w-0" style="display: flex; gap: 8px">
     <input
       v-for="(c, i) in chars"
       :ref="(el) => { if (el) inputRefs[i] = el as HTMLInputElement }"

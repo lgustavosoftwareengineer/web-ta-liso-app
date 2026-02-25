@@ -1,4 +1,14 @@
 import { ref, watch, nextTick } from 'vue'
+
+function afterPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    nextTick().then(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve())
+      })
+    })
+  })
+}
 import { useQueryClient } from '@tanstack/vue-query'
 import {
   useListCategoriesApiCategoriesGet,
@@ -51,11 +61,12 @@ export function useChat() {
 
   // ── Helpers ──
 
+  /** Rola até o final do container de mensagens (scrollHeight), com animação suave. */
   async function scrollToBottom() {
     await nextTick()
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
+    const el = messagesContainer.value
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
   }
 
   // ── Low balance alert ──
@@ -122,9 +133,19 @@ export function useChat() {
         }
         return baseMessage as ChatMessage
       })
-      scrollToBottom()
     },
     { immediate: true },
+  )
+
+  // Scroll para o final do container após as mensagens estarem de fato no DOM (histórico ou nova mensagem).
+  watch(
+    [messages, historyLoading],
+    async () => {
+      if (historyLoading.value) return
+      await afterPaint()
+      scrollToBottom()
+    },
+    { flush: 'post', deep: true },
   )
 
   // ── Chat mutation ──
@@ -167,7 +188,6 @@ export function useChat() {
           messages.value.push({ role: 'bot', text: data.reply, time: formatCurrentTime() })
         }
         queryClient.invalidateQueries({ queryKey: getGetHistoryApiChatGetQueryKey() })
-        scrollToBottom()
       },
       onError: () => {
         messages.value.push({
@@ -175,7 +195,6 @@ export function useChat() {
           text: 'Eita! Tive um problema aqui. Tenta de novo, visse? 😅',
           time: formatCurrentTime(),
         })
-        scrollToBottom()
       },
     },
   })
@@ -186,7 +205,6 @@ export function useChat() {
 
     messages.value.push({ role: 'user', text, time: formatCurrentTime() })
     inputText.value = ''
-    scrollToBottom()
 
     chat.mutate({ data: { message: text } })
   }
@@ -199,6 +217,7 @@ export function useChat() {
     messagesContainer,
     chat,
     sendMessage,
+    scrollToBottom,
     currentTime: formatCurrentTime,
   }
 }

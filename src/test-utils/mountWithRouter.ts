@@ -1,9 +1,11 @@
 /**
- * Mount a component with Vue Router and Pinia so RouterLink, useRoute, etc. work.
+ * Mount a component with Vue Router, Pinia and VueQueryPlugin so RouterLink,
+ * useRoute, Pinia stores and TanStack Vue Query composables all work.
  */
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import type { Component } from 'vue'
 
 const routes = [
@@ -33,9 +35,11 @@ export async function mountWithRouter(
   const router = await createTestRouter(options.route ?? '/')
   await router.isReady()
 
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
   const wrapper = mount(component, {
     global: {
-      plugins: [router, pinia],
+      plugins: [router, pinia, [VueQueryPlugin, { queryClient }]],
     },
   })
   return { wrapper, router }

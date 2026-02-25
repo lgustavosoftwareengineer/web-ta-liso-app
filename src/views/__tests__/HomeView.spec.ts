@@ -18,6 +18,9 @@ const userInitials = ref('EU')
 vi.mock('@/api/generated/categories/categories', () => ({
   useListCategoriesApiCategoriesGet: () => ({ data: categoriesData, isLoading: loadingCategories }),
 }))
+vi.mock('@/api/generated/settings/settings', () => ({
+  useGetSettingsApiSettingsGet: () => ({ data: ref(null) }),
+}))
 vi.mock('@/composables/useUser', () => ({
   useUser: () => ({ initials: userInitials }),
 }))

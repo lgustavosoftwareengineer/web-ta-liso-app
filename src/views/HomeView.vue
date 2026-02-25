@@ -29,7 +29,7 @@ const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year:
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F5EDD8]">
+  <div class="h-full min-h-0 flex flex-col bg-[#F5EDD8]">
     <!-- App header -->
     <header
       class="flex items-center justify-between px-4 py-3 shrink-0 border-b-2 border-[#E5D9C3]"

@@ -7,7 +7,3 @@ export function getGreetingWithEmoji(): string {
   if (h < 18) return 'Boa tarde 🌤️'
   return 'Boa noite 🌙'
 }
-
-export function useGreeting() {
-  return { getGreetingWithEmoji }
-}
