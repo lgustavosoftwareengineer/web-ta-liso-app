@@ -57,7 +57,7 @@ const {
       </button>
     </div>
 
-    <main class="flex-1 overflow-y-auto p-4">
+    <main class="flex-1 min-h-0 overflow-y-auto p-4">
       <!-- Saldo geral do mês -->
       <div
         class="rounded-[20px] p-5 mb-3.5 relative overflow-hidden"

@@ -18,10 +18,10 @@ const isAuthRoute = computed(() => {
   <!-- Login / Token: full screen, no shell -->
   <RouterView v-if="isAuthRoute" />
 
-  <!-- App routes: on mobile viewport fixo e só o conteúdo da view rola; no desktop sidebar + topbar -->
+  <!-- App routes: viewport fixo (um único scroll dentro da view) -->
   <div
     v-else
-    class="flex flex-col h-dvh max-h-dvh overflow-hidden bg-[#F5EDD8] lg:h-screen lg:max-h-none lg:overflow-visible lg:flex-row app-shell-desktop"
+    class="flex flex-col flex-1 min-h-0 w-full overflow-hidden bg-[#F5EDD8] lg:h-screen lg:max-h-none lg:overflow-visible lg:flex-row app-shell-desktop"
   >
     <DesktopSidebar class="hidden lg:flex lg:h-full lg:shrink-0" />
     <div class="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">

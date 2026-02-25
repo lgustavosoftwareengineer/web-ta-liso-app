@@ -1,7 +1,34 @@
 @import 'tailwindcss';
 
+/*
+ * Evita dois scrolls no mobile: documento fixo, só o conteúdo interno (main da view) rola.
+ * Elimina o espaço extra antes do bottom nav no Safari.
+ */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 #app {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile: 100dvh evita que a barra de endereço do Safari crie altura extra / segundo scroll */
+@supports (height: 100dvh) {
+  @media (max-width: 1023px) {
+    html,
+    body,
+    #app {
+      height: 100dvh;
+      max-height: 100dvh;
+    }
+  }
 }
 
 /* Desktop: hide view header and bottom nav when inside app shell */

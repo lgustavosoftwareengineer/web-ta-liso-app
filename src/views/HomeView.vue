@@ -45,7 +45,7 @@ const {
     </header>
 
     <!-- Scrollable content -->
-    <main class="flex-1 overflow-y-auto px-4 py-4">
+    <main class="flex-1 min-h-0 overflow-y-auto px-4 py-4">
       <HomeBalanceCard
         :total-budget="totalBudget"
         :total-spent="totalSpent"

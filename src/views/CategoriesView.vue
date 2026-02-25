@@ -29,7 +29,7 @@ const {
       >
     </header>
 
-    <main class="flex-1 overflow-y-auto p-4">
+    <main class="flex-1 min-h-0 overflow-y-auto p-4">
       <!-- Nova Categoria -->
       <div class="rounded-[18px] p-4 mb-4 border border-[#E5D9C3] bg-white">
         <div
