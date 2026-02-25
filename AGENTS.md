@@ -22,6 +22,20 @@ The backend repo must be cloned to `/workspace/api-ta-liso-app`. It requires:
 - Docker daemon must be started with `sudo dockerd &>/tmp/dockerd.log &` before `docker compose up -d db`.
 - Run `alembic upgrade head` before starting the API server.
 
+### Secrets and external services
+
+| Secret | Used by | Notes |
+|--------|---------|-------|
+| `VITE_API_KEY` / `API_KEY` | Frontend + Backend | Must match. Backend validates `X-API-Key` header. |
+| `RESEND_API_KEY` | Backend (email) | Must be a valid Resend key (starts with `re_`). Without it, login code emails fail but codes are still saved to DB. |
+| `OPENROUTER_API_KEY` | Backend (chat AI) | Required for the chat/transaction feature. Without it, the chat endpoint returns 500. |
+| `RESEND_FROM_EMAIL` | Backend (email) | Must be a verified Resend domain email. |
+
+### Gotchas
+
+- **`@lru_cache` on `get_settings()`**: Persists across `uvicorn --reload`. After changing `.env`, you must fully kill and restart the uvicorn process (not just trigger a reload).
+- **Chat 500 → CORS error in browser**: When the chat endpoint throws an unhandled exception (e.g., missing `OPENROUTER_API_KEY`), the error bypasses CORS middleware, so the browser reports it as a CORS error instead of a 500. Check backend logs (`/tmp/backend.log`) for the real error.
+
 ### API code generation
 
 Before type-checking or building the frontend, run `npm run gen:api` (orval). This generates TypeScript API client code from the backend's OpenAPI spec into `src/api/generated/`. The backend must be running for this to work.
