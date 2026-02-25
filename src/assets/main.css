@@ -1,7 +1,18 @@
 @import 'tailwindcss';
 
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 #app {
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Desktop: hide view header and bottom nav when inside app shell */

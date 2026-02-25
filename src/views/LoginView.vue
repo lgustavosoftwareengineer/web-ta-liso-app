@@ -26,7 +26,7 @@ async function sendCode() {
 
 <template>
   <div
-    class="min-h-screen flex flex-col lg:flex-row relative overflow-hidden"
+    class="min-h-dvh flex flex-col lg:flex-row relative overflow-hidden"
     style="background: #1A1008"
   >
     <!-- Banner strip (above gradient) - full width -->
