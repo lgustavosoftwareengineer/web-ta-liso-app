@@ -81,7 +81,7 @@ onUnmounted(() => {
       <div class="flex-1 flex flex-col min-h-0 border-r-0 lg:border-r lg:border-[#E5D9C3] relative">
         <div
           ref="messagesContainer"
-          class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3.5 lg:p-5 pb-12 lg:pb-5 flex flex-col gap-2.5 lg:gap-3 bg-[#F5EDD8] scroll-smooth"
+          class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3.5 lg:p-5 pb-3 lg:pb-5 flex flex-col gap-2.5 lg:gap-3 bg-[#F5EDD8] scroll-smooth"
         >
           <!-- History loading skeleton -->
           <template v-if="historyLoading">
@@ -135,8 +135,17 @@ onUnmounted(() => {
             aria-label="Ir para a última mensagem"
             @click="onScrollToBottomClick"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v9.586l4.293-4.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 12.586V3a1 1 0 011-1z" clip-rule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 2a1 1 0 011 1v9.586l4.293-4.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 12.586V3a1 1 0 011-1z"
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
         </Transition>
