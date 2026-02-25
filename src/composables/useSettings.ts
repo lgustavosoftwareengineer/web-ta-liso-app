@@ -1,5 +1,5 @@
-import { useGetSettingsApiSettingsGet } from "@/api/generated/settings/settings"
-import { computed } from "vue"
+import { useGetSettingsApiSettingsGet } from '@/api/generated/settings/settings'
+import { computed } from 'vue'
 
 
 export function useSettings() {

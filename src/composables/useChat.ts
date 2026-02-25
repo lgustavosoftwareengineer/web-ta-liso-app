@@ -31,6 +31,7 @@ import type {
 } from '@/api/generated/táLisoAPI.schemas'
 import { useToastStore } from '@/stores/toast'
 import { formatCurrentTime } from '@/utils/dateHelpers'
+import { formatBRL } from '@/utils/categoryHelpers'
 
 export type ChatMessage =
   | { role: 'user'; text: string; time: string }
@@ -73,10 +74,7 @@ export function useChat() {
 
   function buildLowBalanceToastMessage(category: CategoryResponse, remainingBalance: number): string {
     const icon = category.icon ?? '📦'
-    const formattedBalance = remainingBalance.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
+    const formattedBalance = formatBRL(remainingBalance)
     return remainingBalance < 0
       ? `${icon} ${category.name} passou do limite! Saldo: R$ ${formattedBalance}.`
       : `${icon} ${category.name} tá quase no limite! Só sobrou R$ ${formattedBalance}, cabra!`

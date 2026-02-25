@@ -11,3 +11,10 @@ export function formatCurrentDate(): string {
   const year = now.getFullYear()
   return `${day} de ${month} de ${year}`
 }
+
+export function formatMonthYear(): string {
+  const now = new Date()
+  const month = MONTH_NAMES[now.getMonth()]
+  const year = now.getFullYear()
+  return `${month} de ${year}`
+}

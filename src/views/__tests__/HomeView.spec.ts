@@ -4,22 +4,53 @@
  * AAA pattern.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import HomeView from '../HomeView.vue'
 import { mountWithRouter } from '@/test-utils/mountWithRouter'
 import type { CategoryResponse } from '@/api/generated/táLisoAPI.schemas'
 import { createCategory } from '@/test-utils/mockData'
 
-const categoriesData = ref<CategoryResponse[]>([])
-const loadingCategories = ref(false)
+const categoriesRef = ref<CategoryResponse[]>([])
+const loadingRef = ref(false)
 const userInitials = ref('EU')
 
-vi.mock('@/api/generated/categories/categories', () => ({
-  useListCategoriesApiCategoriesGet: () => ({ data: categoriesData, isLoading: loadingCategories }),
-}))
-vi.mock('@/api/generated/settings/settings', () => ({
-  useGetSettingsApiSettingsGet: () => ({ data: ref(null) }),
+const monthLabelRef = ref('Fevereiro de 2025')
+
+vi.mock('@/composables/useHome', () => ({
+  useHome: () => ({
+    categories: categoriesRef,
+    isLoading: loadingRef,
+    totalBudget: computed(() =>
+      (categoriesRef.value ?? []).reduce((s, c) => s + parseFloat(c.initial_amount), 0),
+    ),
+    totalSpent: computed(() => {
+      const list = categoriesRef.value ?? []
+      return list.reduce(
+        (s, c) => s + (parseFloat(c.initial_amount) - parseFloat(c.current_balance)),
+        0,
+      )
+    }),
+    totalRemaining: computed(() => {
+      const list = categoriesRef.value ?? []
+      const budget = list.reduce((s, c) => s + parseFloat(c.initial_amount), 0)
+      const spent = list.reduce(
+        (s, c) => s + (parseFloat(c.initial_amount) - parseFloat(c.current_balance)),
+        0,
+      )
+      return budget - spent
+    }),
+    categoriesAlerts: computed(() =>
+      (categoriesRef.value ?? []).filter((c) => {
+        const initial = parseFloat(c.initial_amount)
+        const balance = parseFloat(c.current_balance)
+        if (!initial) return false
+        const pct = Math.min(100, Math.round(((initial - balance) / initial) * 100))
+        return pct >= 90
+      }),
+    ),
+    monthLabel: computed(() => monthLabelRef.value),
+  }),
 }))
 vi.mock('@/composables/useUser', () => ({
   useUser: () => ({ initials: userInitials }),
@@ -28,16 +59,17 @@ vi.mock('@/composables/useUser', () => ({
 describe('Feature: Tela Início — Visão geral do mês', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    categoriesData.value = []
-    loadingCategories.value = false
+    categoriesRef.value = []
+    loadingRef.value = false
     userInitials.value = 'EU'
+    monthLabelRef.value = 'Fevereiro de 2025'
   })
 
   describe('Scenario: Exibir resumo do mês atual ao entrar no app', () => {
     it('exibe as iniciais do usuário no header', async () => {
       // Arrange: user authenticated, initials from useUser
       userInitials.value = 'JS'
-      categoriesData.value = [createCategory()]
+      categoriesRef.value = [createCategory()]
 
       // Act: user accesses Home
       const { wrapper } = await mountWithRouter(HomeView, { route: '/' })
@@ -49,22 +81,20 @@ describe('Feature: Tela Início — Visão geral do mês', () => {
 
     it('exibe o mês e ano atuais', async () => {
       // Arrange
-      categoriesData.value = [createCategory()]
+      categoriesRef.value = [createCategory()]
+      monthLabelRef.value = 'Fevereiro de 2025'
 
       // Act
       const { wrapper } = await mountWithRouter(HomeView, { route: '/' })
       await wrapper.vm.$nextTick()
 
-      // Assert: month and year (e.g. "fevereiro de 2025" or similar)
-      const now = new Date()
-      const monthYear = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-      const monthName = monthYear.split(' de ')[0] ?? monthYear
-      expect(wrapper.text().toLowerCase()).toMatch(monthName)
+      // Assert: month and year from useHome mock
+      expect(wrapper.text()).toContain('Fevereiro de 2025')
     })
 
     it('exibe card de saldo disponível, total orçado e total gasto', async () => {
       // Arrange: categories with budget and spent
-      categoriesData.value = [
+      categoriesRef.value = [
         createCategory({ initial_amount: '1000', current_balance: '700' }),
       ]
 
@@ -81,7 +111,7 @@ describe('Feature: Tela Início — Visão geral do mês', () => {
 
     it('exibe navegação (links para categorias ou configurações)', async () => {
       // Arrange
-      categoriesData.value = [createCategory()]
+      categoriesRef.value = [createCategory()]
 
       // Act
       const { wrapper } = await mountWithRouter(HomeView, { route: '/' })
@@ -94,8 +124,8 @@ describe('Feature: Tela Início — Visão geral do mês', () => {
 
     it('exibe estado vazio quando não há categorias', async () => {
       // Arrange: no categories
-      categoriesData.value = []
-      loadingCategories.value = false
+      categoriesRef.value = []
+      loadingRef.value = false
 
       // Act
       const { wrapper } = await mountWithRouter(HomeView, { route: '/' })
@@ -108,7 +138,7 @@ describe('Feature: Tela Início — Visão geral do mês', () => {
 
     it('exibe lista de categorias com nome e progresso quando há categorias', async () => {
       // Arrange
-      categoriesData.value = [
+      categoriesRef.value = [
         createCategory({ id: 'c1', name: 'Alimentação', initial_amount: '1000', current_balance: '600' }),
       ]
 

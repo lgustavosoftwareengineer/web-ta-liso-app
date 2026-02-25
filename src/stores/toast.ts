@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 export type ToastType = 'warning' | 'info' | 'success'
 
-export interface Toast {
+export type Toast = {
   id: number
   message: string
   type: ToastType

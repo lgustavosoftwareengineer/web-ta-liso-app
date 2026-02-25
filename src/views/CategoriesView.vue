@@ -1,62 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import BottomNav from '@/components/BottomNav.vue'
-import {
-  useListCategoriesApiCategoriesGet,
-  useCreateCategoryApiCategoriesPost,
-  useDeleteCategoryApiCategoriesCategoryIdDelete,
-  getListCategoriesApiCategoriesGetQueryKey,
-} from '@/api/generated/categories/categories'
-import { useApiError } from '@/composables/useApiError'
-import { categoryPercentage, barColor, formatBRL } from '@/utils/categoryHelpers'
 import AppSpinner from '@/components/AppSpinner.vue'
+import { useCategoriesManagement } from '@/composables/useCategoriesManagement'
+import { categoryPercentage, barColor, formatBRL } from '@/utils/categoryHelpers'
 
-const queryClient = useQueryClient()
-const { getErrorMessage } = useApiError()
-
-const categoryName = ref('')
-const categoryBudget = ref('')
-const selectedIcon = ref('🛒')
-const createError = ref('')
-
-const iconOptions = ['🛒', '🚌', '🏥', '🎉', '📚', '✈️', '🏠', '🌵']
-
-const { data: categories, isLoading } = useListCategoriesApiCategoriesGet()
-
-const createCategory = useCreateCategoryApiCategoriesPost({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
-      categoryName.value = ''
-      categoryBudget.value = ''
-      selectedIcon.value = '🛒'
-      createError.value = ''
-    },
-    onError: (e) => {
-      createError.value = getErrorMessage(e)
-    },
-  },
-})
-
-const deleteCategory = useDeleteCategoryApiCategoriesCategoryIdDelete({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
-    },
-  },
-})
-
-function saveCategory() {
-  if (!categoryName.value.trim() || !categoryBudget.value) return
-  createCategory.mutate({
-    data: {
-      name: categoryName.value.trim(),
-      icon: selectedIcon.value,
-      initial_amount: parseFloat(categoryBudget.value),
-    },
-  })
-}
+const {
+  categories,
+  isLoading,
+  categoryName,
+  categoryBudget,
+  selectedIcon,
+  iconOptions,
+  createError,
+  createCategory,
+  deleteCategory,
+  saveCategory,
+  deleteCategoryById,
+} = useCategoriesManagement()
 </script>
 
 <template>
@@ -195,7 +155,7 @@ function saveCategory() {
                 type="button"
                 class="text-[17px] text-[#C0252A] cursor-pointer disabled:opacity-40"
                 :disabled="deleteCategory.isPending.value"
-                @click="deleteCategory.mutate({ categoryId: cat.id })"
+                @click="deleteCategoryById(cat.id)"
               >
                 🗑️
               </button>

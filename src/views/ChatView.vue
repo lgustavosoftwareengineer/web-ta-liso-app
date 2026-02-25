@@ -2,6 +2,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import BottomNav from '@/components/BottomNav.vue'
 import ChatMessage from '@/components/ChatMessage.vue'
+import ChatTypingIndicator from '@/components/ChatTypingIndicator.vue'
 import { categoryPercentage, barColor, balanceColor, formatBRL } from '@/utils/categoryHelpers'
 import { getGreetingWithEmoji } from '@/composables/useGreeting'
 import { useChat } from '@/composables/useChat'
@@ -118,21 +119,7 @@ onUnmounted(() => {
           </template>
 
           <!-- Typing indicator -->
-          <div v-if="chat.isPending.value" class="max-w-[82%] self-start">
-            <div
-              class="py-2.5 px-4 rounded-2xl rounded-bl bg-white border border-[#E5D9C3] text-[#7A6E5F] text-xs flex items-center gap-1"
-            >
-              <span
-                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:0ms]"
-              />
-              <span
-                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:150ms]"
-              />
-              <span
-                class="w-1.5 h-1.5 rounded-full bg-[#7A6E5F] animate-bounce [animation-delay:300ms]"
-              />
-            </div>
-          </div>
+          <ChatTypingIndicator v-if="chat.isPending.value" />
         </div>
 
         <!-- Botão scroll: irmão do container de mensagens, absolute na coluna = fica fixo no canto da área visível (não rola com o conteúdo) -->

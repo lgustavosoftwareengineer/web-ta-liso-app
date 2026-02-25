@@ -9,6 +9,7 @@ import ChatView from '../ChatView.vue'
 import { mountWithRouter } from '@/test-utils/mountWithRouter'
 import { createCategory, createTransaction } from '@/test-utils/mockData'
 import type { ChatMessage } from '@/composables/useChat'
+import type { ChatResponseInsufficientBalance } from '@/api/generated/táLisoAPI.schemas'
 
 // Shared refs for mocks (reset in beforeEach)
 const messagesRef = ref<ChatMessage[]>([])
@@ -130,7 +131,11 @@ describe('Feature: Chat financeiro — Registro de gastos', () => {
           role: 'bot',
           text: 'Não tem saldo suficiente!',
           time: '10:02',
-          insufficientBalance: { available: '50', requested: '200' },
+          insufficientBalance: {
+            available: '50',
+            requested: '200',
+            message: 'Saldo insuficiente',
+          } satisfies ChatResponseInsufficientBalance,
         },
       ]
 
