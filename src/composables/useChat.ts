@@ -150,7 +150,7 @@ export function useChat() {
 
   const chat = useChatApiChatPost({
     mutation: {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         if (data.transaction) {
           const transactionCategory = (categories.value ?? []).find(
             (c) => c.id === data.transaction!.category_id,
@@ -172,9 +172,6 @@ export function useChat() {
           if (transactionCategory && remainingBalance !== undefined) {
             checkAndShowLowBalanceAlert(transactionCategory, remainingBalance)
           }
-
-          queryClient.invalidateQueries({ queryKey: getListTransactionsApiTransactionsGetQueryKey() })
-          queryClient.invalidateQueries({ queryKey: getListCategoriesApiCategoriesGetQueryKey() })
         } else if (data.insufficient_balance) {
           messages.value.push({
             role: 'bot',
@@ -185,6 +182,15 @@ export function useChat() {
         } else {
           messages.value.push({ role: 'bot', text: data.reply, time: formatCurrentTime() })
         }
+
+        // Sempre invalida e refetch: a API pode ter alterado categorias (edit_category, delete_category)
+        // ou transações (nova transação, edit_transaction, etc.) em qualquer resposta.
+        const categoriesKey = getListCategoriesApiCategoriesGetQueryKey()
+        const transactionsKey = getListTransactionsApiTransactionsGetQueryKey()
+        queryClient.invalidateQueries({ queryKey: categoriesKey })
+        queryClient.invalidateQueries({ queryKey: transactionsKey })
+        await queryClient.refetchQueries({ queryKey: categoriesKey })
+        await queryClient.refetchQueries({ queryKey: transactionsKey })
         queryClient.invalidateQueries({ queryKey: getGetHistoryApiChatGetQueryKey() })
       },
       onError: () => {
