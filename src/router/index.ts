@@ -7,6 +7,7 @@ import CategoriesView from '@/views/CategoriesView.vue'
 import ChatView from '@/views/ChatView.vue'
 import ResumoView from '@/views/ResumoView.vue'
 import ConfiguracoesView from '@/views/ConfiguracoesView.vue'
+import LancamentosView from '@/views/LancamentosView.vue'
 
 const AUTH_ROUTES = ['login', 'token']
 
@@ -46,6 +47,12 @@ const router = createRouter({
       name: 'resumo',
       component: ResumoView,
       meta: { topbar: { subtitle: 'Visão geral do mês' } },
+    },
+    {
+      path: '/lancamentos',
+      name: 'lancamentos',
+      component: LancamentosView,
+      meta: { topbar: { title: '📋 Lançamentos', subtitle: 'Gerencie suas transações' } },
     },
     {
       path: '/configuracoes',

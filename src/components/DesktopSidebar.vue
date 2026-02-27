@@ -67,6 +67,17 @@ function isActive(name: string) {
       >
         <span class="text-[17px]">📊</span> Resumo
       </RouterLink>
+      <RouterLink
+        to="/lancamentos"
+        class="flex items-center gap-2.5 py-2.5 px-5 text-[13px] font-semibold transition-all border-r-[3px] border-transparent no-underline"
+        :class="
+          isActive('lancamentos')
+            ? 'text-[#F5C518] bg-[#F5C518]/10 border-[#F5C518]'
+            : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+        "
+      >
+        <span class="text-[17px]">📋</span> Lançamentos
+      </RouterLink>
       <div class="h-px bg-white/10 my-2 mx-5" />
       <RouterLink
         to="/configuracoes"

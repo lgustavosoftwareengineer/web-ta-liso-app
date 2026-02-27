@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import BottomNav from '@/components/BottomNav.vue'
 import { formatBRL } from '@/utils/categoryHelpers'
 import { useMonthlyResume } from '@/composables/useMonthlyResume'
@@ -177,10 +178,21 @@ const {
 
       <!-- Lançamentos -->
       <div
-        class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider mb-2.5"
-        style="font-family: 'Baloo 2', cursive"
+        class="flex justify-between items-center mb-2.5 gap-2"
       >
-        Lançamentos · {{ monthLabel }}
+        <span
+          class="text-[13px] font-bold text-[#7A6E5F] uppercase tracking-wider"
+          style="font-family: 'Baloo 2', cursive"
+        >
+          Lançamentos · {{ monthLabel }}
+        </span>
+        <RouterLink
+          to="/lancamentos"
+          class="shrink-0 py-2 px-3 rounded-xl text-xs font-bold text-white border-0 cursor-pointer"
+          style="font-family: 'Baloo 2', cursive; background: linear-gradient(135deg, #E8500A, #F5C518)"
+        >
+          Gerenciar lançamentos
+        </RouterLink>
       </div>
 
       <!-- Loading -->

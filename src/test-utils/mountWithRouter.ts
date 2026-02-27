@@ -14,6 +14,7 @@ const routes = [
   { path: '/chat', name: 'chat', component: { template: '<div>Chat</div>' } },
   { path: '/resumo', name: 'resumo', component: { template: '<div>Resumo</div>' } },
   { path: '/categorias', name: 'categorias', component: { template: '<div>Categorias</div>' } },
+  { path: '/lancamentos', name: 'lancamentos', component: { template: '<div>Lançamentos</div>' } },
   { path: '/configuracoes', name: 'configuracoes', component: { template: '<div>Config</div>' } },
 ]
 
